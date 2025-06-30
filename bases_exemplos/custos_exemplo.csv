@@ -1,0 +1,10 @@
+Tipo_Cliente,Tipo_Custo,Valor_Custo
+Premium,Atraso,15
+Premium,Nao_Atendimento,100
+Premium,Atendimento_Parcial,25
+Standard,Atraso,10
+Standard,Nao_Atendimento,75
+Standard,Atendimento_Parcial,20
+Basic,Atraso,5
+Basic,Nao_Atendimento,50
+Basic,Atendimento_Parcial,10
