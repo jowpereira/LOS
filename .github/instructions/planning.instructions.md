@@ -2,19 +2,17 @@
 applyTo: "**/*"
 priority: 90
 ---
-Quando o usuário pedir um **plano**, ou ao detectar que não há
-arquivo de plano para a tarefa corrente:
+Quando o usuário pedir um **plano** (ou não existir plano ativo):
 
 1. Copie `.github/templates/plano-acao.md`
-   para `/temp-todo/` com nome `YYYYMMDD-HHmmss-<slug>.md`;
-2. Substitua `<Título da Tarefa>`, `<resumo da solicitação>` e timestamps
-   pelo contexto real.
-3. Gere a seção **☑️ Checklist de Subtarefas** (ver template).
-4. Adicione entrada provisória em `docs/memory/index.md`:
+   → `/temp-todo/YYYYMMDD-HHmmss-<slug>.md`.
+2. Preencha `<Título da Tarefa>`, `<resumo da solicitação>`, timestamps.
+3. Gere automaticamente a seção **☑️ Checklist de Subtarefas**.
+4. Acrescente linha em `docs/memory/index.md`:
 
 ```
 
-* YYYY-MM-DD | \<Título da Tarefa> | PENDENTE
+\| YYYY-MM-DD | \<Título da Tarefa> | PENDENTE | — |
 
 ```
 

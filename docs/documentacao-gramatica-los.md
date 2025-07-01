@@ -162,6 +162,72 @@ A gramática é altamente extensível:
 - Funções matemáticas adicionais podem ser incluídas em `nome_funcao`
 - Estruturas mais complexas podem ser adicionadas seguindo o padrão
 
+## 🎯 Capacidades Completas da Linguagem LOS
+
+### ✅ Funcionalidades Implementadas e Testadas
+
+#### **Tipos de Expressões**
+- ✅ **Objetivos**: `MINIMIZAR:` e `MAXIMIZAR:` com expressões matemáticas
+- ✅ **Restrições**: Comparações com operadores relacionais (`<=`, `>=`, `==`, `!=`, `<`, `>`, `=`)
+- ✅ **Condicionais**: `SE ... ENTAO ... SENAO` para lógica condicional
+- ✅ **Matemáticas**: Expressões aritméticas com precedência correta
+
+#### **Operações e Funções**
+- ✅ **Aritméticas**: `+`, `-`, `*`, `/` com precedência correta
+- ✅ **Funções**: `abs()`, `max()`, `min()`, `sum()`, `sqrt()`
+- ✅ **Agregações**: `SOMA DE` com loops opcionais
+- ✅ **Parênteses**: Para agrupamento e precedência explícita
+
+#### **Estruturas de Dados**
+- ✅ **Variáveis simples**: `x`, `custo`, `receita`
+- ✅ **Variáveis indexadas**: `x[produto]`, `transporte[origem,destino]`, `alocacao[i,j,k]`
+- ✅ **Referências a datasets**: `produtos.Preco`, `clientes.Nome`
+- ✅ **Strings e números**: `'texto'`, `"texto"`, `123`, `45.67`
+
+#### **Controle de Fluxo**
+- ✅ **Loops**: `PARA CADA variavel EM dataset`
+- ✅ **Filtros**: `ONDE condicao` para filtrar iterações
+- ✅ **Combinações**: Agregações com loops e filtros
+
+### 🔄 Funcionalidades Parcialmente Implementadas
+
+#### **No Código mas Não na Gramática Atual**
+- 🔄 **Declaração de tipos**: `VAR CONTINUA x`, `VAR INTEIRA y`, `VAR BINARIA z`
+- 🔄 **Operadores lógicos**: `E`, `OU`, `NAO` (implementados no tradutor)
+- 🔄 **JOINs de datasets**: `dataset1 JOIN dataset2 ON condicao`
+- 🔄 **Operadores especiais**: `IN`, `NOT IN`, `LIKE`, `BETWEEN`, `EXISTS`
+- 🔄 **Loops avançados**: `PARA`, `ENQUANTO`, loops aninhados
+- 🔄 **Expressões ternárias**: `condicao ? verdadeiro : falso`
+
+### 📊 Exemplos de Uso Validados
+
+```lark
+# Objetivo básico
+MINIMIZAR: x + y + z
+
+# Restrição com agregação
+soma de x[produto] PARA CADA produto EM produtos <= 100
+
+# Condicional
+SE x > 0 ENTAO x SENAO 0
+
+# Expressão complexa
+MAXIMIZAR: soma de produtos.Preco * vendas[produto] PARA CADA produto EM produtos ONDE produtos.Ativo == 1
+```
+
+### 📁 Documentação de Exemplos
+
+Criada pasta `exemplos_los/` com:
+- `00_guia_sintaxe.los` - Guia completo de sintaxe
+- `01_objetivos.los` - Exemplos de objetivos de otimização  
+- `02_restricoes.los` - Exemplos de restrições
+- `03_operacoes_matematicas.los` - Operações e funções matemáticas
+- `04_condicionais.los` - Expressões condicionais
+- `05_agregacoes_loops.los` - Agregações e loops
+- `06_datasets_variaveis.los` - Datasets e variáveis indexadas
+- `07_operadores_relacionais.los` - Operadores de comparação
+- `08_exemplos_complexos.los` - Casos de uso complexos
+
 ## 🔄 Considerações de Manutenção
 
 Ao modificar a gramática:
@@ -170,7 +236,9 @@ Ao modificar a gramática:
 - Garantir que tokens não entrem em conflito
 - Atualizar o `TradutorLOS` correspondente em `los_parser.py`
 - Adicionar testes para novas construções
+- Validar exemplos na pasta `exemplos_los/`
 
 ---
 
 *Última atualização: 30 de junho de 2025*
+*Análise completa das capacidades: 30 de junho de 2025*

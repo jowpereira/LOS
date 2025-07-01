@@ -1070,12 +1070,11 @@ class ParserLOS:
         # Converter palavras-chave para maiúsculas
         palavras_chave = [
             'minimizar', 'maximizar', 'se', 'entao', 'senao',
-            'para', 'cada', 'em', 'onde', 'e', 'ou', 'nao',
-            'de', 'soma'  # Adicionado "de" e "soma" à lista de palavras-chave
+            'para', 'cada', 'em', 'onde', 'e', 'ou', 'nao'
         ]
         
-        # Tratamento especial para "soma de" que deve ser reconhecido como dois tokens separados
-        texto = re.sub(r'\b(soma)\s+(?:de)\b', 'SOMA DE', texto, flags=re.IGNORECASE)
+        # Tratamento especial para "SOMA DE" - converte sempre em contextos apropriados
+        texto = re.sub(r'\bsoma\s+de\b', 'SOMA DE', texto, flags=re.IGNORECASE)
         
         # Usar regex para substituir apenas palavras inteiras e não partes de palavras
         for palavra in palavras_chave:

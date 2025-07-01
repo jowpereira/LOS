@@ -1,6 +1,4 @@
-# Plano de Ação## ☑️ Checklist de Subtarefas
-<!-- Gerado automaticamente a partir da lista acima.
-     Use "[ ]" para pendente e "[x]" para concluído. -->tulo da Tarefa>
+# Plano de Ação — <Título da Tarefa>
 **Timestamp:** YYYY-MM-DD HH:mm:ss  
 **Contexto recebido:** "<resumo da solicitação>"
 
@@ -16,11 +14,7 @@
     - …
 
 ## ☑️ Checklist de Subtarefas
-  Use “[ ]” para pendente e “[x]” para concluído.
-
-[ ] 1  Tarefa principal
-  [ ] 1.1 Subtarefa
-  [ ] 1.2 Subtarefa
+<!-- Use "[ ]" para pendente e "[x]" para concluído. -->
 
 ## Métricas de aceite
 - Extrair da solicitação ou definir com o usuário.

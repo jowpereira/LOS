@@ -4,15 +4,14 @@ priority: 100
 ---
 **Antes de responder:**
 
-1. Verifique se existe a pasta `/temp-todo`; crie se faltando.  
-2. Caso o chat atual esteja ligado a uma tarefa já em andamento,  
-   acrescente uma linha na tabela **Registro de Progresso** do arquivo  
-   plano atual:
-
-   _Isso deve acionar a rotina de atualização do Checklist._
+1. Garanta a existência das pastas `/temp-todo`, `docs/memory/drafts`.
+2. Se o chat estiver ligado a um plano em andamento,
+   adicione nova linha em **Registro de Progresso**:
 
 ```
 
-\| \<ISO-datetime> | \<ação resumida> | \<observações> |
+\| <ISO-datetime> | \<ação resumida> | \<observações> |
 
 ```
+
+_Isso deve acionar a atualização automática do Checklist._

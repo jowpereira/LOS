@@ -2,9 +2,9 @@
 applyTo: "**/*"
 priority: 70
 ---
-Quando a pergunta exigir "o que já foi feito" ou "decisão X":
+Para responder perguntas de histórico ("já fizemos X?", "qual ADR?"):
 
-1. Abra `docs/memory/index.md` e escolha a linha relevante.  
-2. Leia no máximo 20 linhas ao redor no arquivo apontado.  
-3. Cite trecho lido com link relativo no final da resposta.  
-4. Jamais cole documentos inteiros no chat.
+1. Abra `docs/memory/index.md`; escolha a linha relevante.
+2. Leia no máx. 20 linhas ao redor no arquivo apontado.
+3. Cite o trecho lido (link relativo).  
+4. Nunca cole documentos inteiros no chat.
