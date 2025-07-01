@@ -119,9 +119,17 @@ tests/
 - Base sólida para desenvolvimento futuro estabelecida.
 
 ## 💾 Commit / CHANGELOG / TODO
-**Pronto para commit único consolidando:**
-- Refatoração do README (remoção de `pip install`)
-- Suite de testes completamente reescrita e expandida
-- Compatibilidade híbrida entre arquiteturas
-- 34 testes essenciais funcionando
-- Documentação e relatórios de conclusão
+**Commit criado:** `19c09dc` - feat: expande e refatora suite de testes com arquitetura hibrida
+
+**Resumo das mudanças:**
+- Remove instruções pip install incorretas do README los/
+- Reescreve completamente teste_exemplos_los.py com 16 testes robustos  
+- Implementa detecção automática e fallback entre nova/legada arquitetura
+- Adiciona helper safe_parse() para compatibilidade sync/async
+- Cria testes unitários simplificados (test_unit_modules_fixed.py)
+- Implementa testes de performance, arquivos e compatibilidade cruzada
+- Adiciona validação arquitetural e relatórios de conclusão
+- Total: 34 testes essenciais funcionando (100% taxa sucesso)
+- Estabelece base sólida para desenvolvimento futuro
+
+**85 arquivos alterados** | 12378 inserções(+) | 3478 remoções(-)
