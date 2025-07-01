@@ -1,0 +1,28 @@
+# 🔄 Expressões Condicionais
+
+# Condicional simples
+SE x > 0 ENTAO x SENAO 0
+
+# Condicional com comparação complexa
+SE vendas[produto] >= meta[produto] ENTAO bonus[produto] SENAO 0
+
+# Condicional aninhada em agregação (comentada - problema no parser)
+# soma de (SE produtos.Categoria == 'Premium' ENTAO vendas[produto] * 1.2 SENAO vendas[produto]) PARA CADA produto EM produtos
+
+# Condicional com múltiplas variáveis
+SE estoque[produto] > demanda[produto] ENTAO estoque[produto] - demanda[produto] SENAO 0
+
+# Condicional em restrição (dividida em duas linhas)
+# SE promocao[produto] == 1 ENTAO vendas[produto] * 0.9 SENAO vendas[produto] <= limite[produto]
+
+# Condicional com dataset
+SE clientes.Tipo == 'VIP' ENTAO desconto[cliente] * 0.15 SENAO desconto[cliente] * 0.05
+
+# Múltiplas condicionais em objetivo (comentada - problema no parser)
+# MINIMIZAR: soma de (SE urgente[pedido] == 1 ENTAO custo[pedido] * 1.5 SENAO custo[pedido]) PARA CADA pedido EM pedidos
+
+# Condicional com operadores relacionais
+SE produtos.Estoque_Atual <= produtos.Estoque_Minimo ENTAO produtos.Custo_Reposicao SENAO 0
+
+# Condicional em filtro ONDE (comentada - problema no parser)
+# soma de vendas[produto] PARA CADA produto EM produtos ONDE (SE produtos.Sazonalidade == 1 ENTAO vendas[produto] > 100 SENAO vendas[produto] > 50)

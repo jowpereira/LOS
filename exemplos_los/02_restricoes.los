@@ -1,0 +1,31 @@
+# 🚧 Restrições Básicas e Compostas
+
+# Restrição simples de capacidade
+x + y + z <= 100
+
+# Restrição de demanda mínima
+vendas[produto] >= demanda[produto]
+
+# Restrição de igualdade
+entrada - saida == 0
+
+# Restrição com agregação
+soma de x[produto] PARA CADA produto EM produtos <= capacidade_maxima
+
+# Restrição de orçamento
+soma de produtos.Custo * x[produto] PARA CADA produto EM produtos <= orcamento
+
+# Restrição com filtro
+soma de producao[produto] PARA CADA produto EM produtos ONDE produtos.Categoria == 'A' >= meta_categoria_a
+
+# Restrição de balanceamento
+soma de entrada[deposito] PARA CADA deposito EM depositos == soma de saida[deposito] PARA CADA deposito EM depositos
+
+# Restrição de não-negatividade
+x[produto] >= 0
+
+# Restrição de limite superior
+vendas[cliente] <= clientes.Limite_Credito
+
+# Restrição percentual (comentada - múltiplas agregações problemáticas)
+# marketing[canal] <= 0.3 * soma de marketing[c] PARA CADA c EM canais

@@ -1,0 +1,46 @@
+# 🔍 Operadores Relacionais e Comparações
+
+# Menor ou igual
+x <= 100
+
+# Maior ou igual
+vendas[produto] >= meta[produto]
+
+# Igualdade
+entrada == saida
+
+# Diferença
+status[produto] != 'Inativo'
+
+# Menor que
+custo[produto] < orcamento[produto]
+
+# Maior que
+receita[cliente] > meta[cliente]
+
+# Igualdade simples (=)
+categoria[produto] = 'A'
+
+# Comparações em expressões condicionais
+SE vendas[produto] >= meta[produto] ENTAO bonus[produto] SENAO 0
+
+# Comparações em filtros ONDE
+soma de vendas[produto] PARA CADA produto EM produtos ONDE produtos.Categoria == 'Premium'
+
+# Múltiplas comparações (comentada - condicionais aninhados problemáticos)
+# SE x > 0 ENTAO (SE y < 100 ENTAO x + y SENAO x) SENAO 0
+
+# Comparação de agregações
+soma de vendas[produto] PARA CADA produto EM produtos >= soma de metas[produto] PARA CADA produto EM produtos
+
+# Comparação com números decimais
+margem[produto] >= 0.15
+
+# Comparação com strings
+produtos.Regiao == 'Norte'
+
+# Comparação entre variáveis indexadas
+estoque[produto] <= demanda[produto]
+
+# Comparação complexa
+(receita[cliente] - custo[cliente]) / receita[cliente] >= 0.2

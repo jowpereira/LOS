@@ -10,17 +10,40 @@ objetivo: "MINIMIZAR" ":" expressao_matematica -> objetivo_minimizar
 
 restricao: expressao_matematica operador_relacional expressao_matematica
 
-expressao_condicional: "SE" expressao_comparacao "ENTAO" expressao_matematica "SENAO" expressao_matematica
+expressao_condicional: "SE" expressao_logica "ENTAO" expressao_matematica "SENAO" expressao_matematica
+
+?expressao_logica: expressao_logica_ou
+
+?expressao_logica_ou: expressao_logica_ou "OU" expressao_logica_e -> operacao_ou
+                   | expressao_logica_e
+
+?expressao_logica_e: expressao_logica_e "E" expressao_logica_nao -> operacao_e
+                   | expressao_logica_nao
+
+?expressao_logica_nao: "NAO" expressao_comparacao -> operacao_nao
+                     | expressao_comparacao
 
 ?expressao_comparacao: expressao_matematica operador_relacional expressao_matematica
 
-?expressao_matematica: soma | agregacao | loop
+?expressao_matematica: soma_agregacao
 
-?agregacao: "SOMA" "DE" expressao_matematica loop?
+?soma_agregacao: soma_agregacao op_aditivo produto_agregacao -> operacao_aditiva_agregacao
+               | produto_agregacao
+
+?produto_agregacao: produto_agregacao op_multiplicativo fator_agregacao -> operacao_multiplicativa_agregacao
+                  | fator_agregacao
+
+?fator_agregacao: agregacao | soma | loop
+
+?agregacao: "SOMA" "DE" expressao_agregavel loop_multiplo?
+
+?expressao_agregavel: soma | expressao_condicional | "(" expressao_condicional ")"
+
+?loop_multiplo: loop+
 
 ?loop: "PARA" "CADA" IDENTIFICADOR "EM" IDENTIFICADOR condicao_onde?
 
-?condicao_onde: "ONDE" expressao_comparacao
+?condicao_onde: "ONDE" expressao_logica
 
 ?soma: soma op_aditivo produto -> operacao_aditiva
      | produto
@@ -34,12 +57,14 @@ op_multiplicativo: "*" | "/"
 ?fator: numero
       | string
       | IDENTIFICADOR
-      | IDENTIFICADOR "." IDENTIFICADOR -> referencia_dataset
+      | IDENTIFICADOR "." dataset_coluna -> referencia_dataset
       | IDENTIFICADOR "[" indices "]" -> variavel_indexada
       | nome_funcao "(" argumentos ")" -> funcao_matematica
       | "(" expressao_matematica ")"
 
-indices: IDENTIFICADOR ("," IDENTIFICADOR)*
+dataset_coluna: IDENTIFICADOR | STRING
+
+indices: expressao_matematica ("," expressao_matematica)*
 
 argumentos: expressao_matematica ("," expressao_matematica)*
           |

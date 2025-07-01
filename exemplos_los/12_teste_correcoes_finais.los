@@ -1,0 +1,13 @@
+# Teste das Correções Finais
+
+# === MÚLTIPLAS AGREGAÇÕES (AGORA CORRIGIDO) ===
+soma de receitas[produto] PARA CADA produto EM produtos - soma de custos[produto] PARA CADA produto EM produtos
+soma de vendas[cliente] PARA CADA cliente EM clientes + soma de bonus[cliente] PARA CADA cliente EM clientes
+soma de producao[fabrica] PARA CADA fabrica EM fabricas * 0.95
+
+# === CONDICIONAIS DENTRO DE AGREGAÇÕES (AGORA CORRIGIDO) ===
+soma de (SE produtos.Categoria == 'Premium' ENTAO vendas[produto] * 1.2 SENAO vendas[produto]) PARA CADA produto EM produtos
+soma de (SE estoque[produto] > 0 ENTAO producao[produto] SENAO 0) PARA CADA produto EM produtos
+
+# === TESTES COMBINADOS ===
+MAXIMIZAR: soma de (SE produtos.Tipo == 'A' ENTAO receitas[produto] SENAO 0) PARA CADA produto EM produtos - soma de custos[produto] PARA CADA produto EM produtos

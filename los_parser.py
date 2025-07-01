@@ -194,6 +194,26 @@ class TradutorLOS(Transformer):
         direita = items[2]
         return f"{esquerda} {operador} {direita}"
     
+    # === OPERADORES LÓGICOS ===
+    
+    def operacao_ou(self, items):
+        """Operador lógico OU"""
+        if len(items) >= 2:
+            return f"({items[0]} or {items[1]})"
+        return str(items[0]) if items else ""
+    
+    def operacao_e(self, items):
+        """Operador lógico E"""
+        if len(items) >= 2:
+            return f"({items[0]} and {items[1]})"
+        return str(items[0]) if items else ""
+    
+    def operacao_nao(self, items):
+        """Operador lógico NAO"""
+        if items:
+            return f"(not {items[0]})"
+        return ""
+
     # === AGREGAÇÕES COMPLEXAS ===
     
     def agregacao_complexa(self, items):
@@ -268,16 +288,55 @@ class TradutorLOS(Transformer):
             return ""
         return str(items[0])
     
+    def loop_multiplo(self, items):
+        """Múltiplos loops aninhados: PARA CADA ... PARA CADA"""
+        if not items:
+            return ""
+        
+        # Construir loops aninhados
+        loops = []
+        for loop_item in items:
+            loops.append(str(loop_item))
+        
+        # Concatenar todos os loops
+        return " ".join(loops)
+    
+    # === OPERAÇÕES COM AGREGAÇÕES ===
+    
+    def operacao_aditiva_agregacao(self, items):
+        """Operações + e - entre agregações"""
+        if len(items) < 3:
+            return str(items[0]) if items else ""
+        
+        esquerda = str(items[0])
+        operador = str(items[1])
+        direita = str(items[2])
+        
+        return f"({esquerda} {operador} {direita})"
+    
+    def operacao_multiplicativa_agregacao(self, items):
+        """Operações * e / entre agregações"""
+        if len(items) < 3:
+            return str(items[0]) if items else ""
+        
+        esquerda = str(items[0])
+        operador = str(items[1])
+        direita = str(items[2])
+        
+        return f"({esquerda} {operador} {direita})"
+
     # === FUNÇÕES ===
     
     def funcao_matematica(self, items):
         """abs(x), max(a,b), etc."""
-        if len(items) < 2:
-            return str(items[0]) if items else ""
+        if len(items) < 1:
+            return ""
+        
         nome_funcao = str(items[0])
         argumentos = str(items[1]) if len(items) > 1 else ""
         
-        funcao_python = self._mapear_funcao_matematica(nome_funcao)
+        # Usar o método nome_funcao existente para mapear funções
+        funcao_python = self.nome_funcao([nome_funcao])
         return f"{funcao_python}({argumentos})"
     
     def argumentos(self, items):
@@ -351,18 +410,39 @@ class TradutorLOS(Transformer):
         return ",".join(indices_valores)
     
     def referencia_dataset(self, items):
-        """produtos.Custo_Producao"""
+        """produtos.Custo_Producao ou produtos.'Custo de Producao'"""
         dataset = str(items[0])
         coluna = str(items[1])
         
         self.datasets_referenciados.add(dataset)
         
-        # Remover aspas se for coluna com espaços
+        # Tratar diferentes formatos de coluna
         if coluna.startswith("'") and coluna.endswith("'"):
-            coluna = coluna[1:-1]
-        
-        return f'{dataset}["{coluna}"]'
+            # String com aspas simples: 'Custo de Producao'
+            coluna_limpa = coluna[1:-1]
+            return f'{dataset}["{coluna_limpa}"]'
+        elif coluna.startswith('"') and coluna.endswith('"'):
+            # String com aspas duplas: "Custo de Producao"
+            coluna_limpa = coluna[1:-1]
+            return f'{dataset}["{coluna_limpa}"]'
+        else:
+            # Identificador simples: Custo_Producao
+            return f'{dataset}["{coluna}"]'
     
+    def dataset_coluna(self, items):
+        """Processa colunas de dataset (IDENTIFICADOR ou STRING)"""
+        if not items:
+            return ""
+        
+        valor = str(items[0])
+        
+        # Se for uma string com aspas, retornar apenas o conteúdo
+        if (valor.startswith("'") and valor.endswith("'")) or (valor.startswith('"') and valor.endswith('"')):
+            return valor[1:-1]
+        
+        # Se for identificador simples, retornar como está
+        return valor
+
     # === EXPRESSÕES BOOLEANAS ===
     
     def booleano_logico(self, items):
@@ -717,6 +797,9 @@ class TradutorLOS(Transformer):
     
     def nome_funcao(self, items):
         """Nomes de funções matemáticas expandidas"""
+        if not items:
+            return "unknown_function"
+            
         nome = str(items[0]).lower()
         
         # Mapeamento de funções
@@ -965,7 +1048,7 @@ class ParserLOS:
         # Processar as linhas agrupadas
         for linha in linhas:
             try:
-                restricao = self.analisar_expressao(linha)
+                restricao = self.analisar_express_expressao(linha)
                 restricoes.append(restricao)
             except Exception as e:
                 logger.warning(f"Erro ao analisar restrição '{linha}': {e}")

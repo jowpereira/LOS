@@ -1,0 +1,19 @@
+# 📋 Objetivos de Otimização Básicos
+
+# Objetivo de minimização simples
+MINIMIZAR: x + y + z
+
+# Objetivo de maximização simples  
+MAXIMIZAR: receita - custos
+
+# Minimização com variáveis indexadas
+MINIMIZAR: soma de custos[produto] * x[produto] PARA CADA produto EM produtos
+
+# Maximização com agregação
+MAXIMIZAR: soma de produtos.Preco * vendas[produto] PARA CADA produto EM produtos
+
+# Objetivo com expressão complexa
+MINIMIZAR: soma de produtos.Custo_Producao * x[produto] + produtos.Custo_Estoque * estoque[produto] PARA CADA produto EM produtos
+
+# Maximização com filtro
+MAXIMIZAR: soma de vendas[cliente] * margem[cliente] PARA CADA cliente EM clientes ONDE clientes.Ativo == 1

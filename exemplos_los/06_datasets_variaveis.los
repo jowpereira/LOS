@@ -1,0 +1,46 @@
+# 📊 Referências a Datasets e Variáveis Indexadas
+
+# Referência simples a coluna de dataset
+produtos.Preco
+
+# Referência a dataset com nome de coluna com espaços (comentada - não suportada)
+# produtos.'Custo de Producao'
+
+# Variável indexada unidimensional
+x[produto]
+
+# Variável indexada bidimensional
+transporte[origem,destino]
+
+# Variável indexada tridimensional
+alocacao[produto,fabrica,deposito]
+
+# Combinação de dataset e variável indexada
+produtos.Custo_Unitario * quantidade[produto]
+
+# Múltiplas referências de dataset
+vendas[produto] * produtos.Preco - custos[produto] * produtos.Custo
+
+# Referência a dataset dentro de agregação
+soma de produtos.Peso * quantidade[produto] PARA CADA produto EM produtos
+
+# Variáveis indexadas em diferentes contextos
+x[cliente] + y[produto] + z[cliente,produto]
+
+# Dataset como fonte de iteração
+PARA CADA cliente EM clientes
+
+# Referência a coluna numérica
+produtos.Estoque_Atual
+
+# Referência a coluna de texto
+produtos.Categoria
+
+# Referência a coluna booleana
+produtos.Ativo
+
+# Múltiplos datasets na mesma expressão
+vendas[produto] * produtos.Preco + impostos[produto] * produtos.Taxa_Imposto
+
+# Indexação com variáveis de loop
+soma de custos[produto] * quantidade[produto] PARA CADA produto EM produtos

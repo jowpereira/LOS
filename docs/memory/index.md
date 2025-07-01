@@ -3,3 +3,6 @@
 | Data | Plano | Status |
 |------|-------|--------|
 | 2025-06-30 | [Consolidação Final do Parser LOS](../../temp-todo/20250630-172300-consolidacao-parser-los.md) | CONCLUÍDO |
+| 2025-06-30 | [Análise e Documentação das Capacidades LOS](../../temp-todo/20250630-180000-analise-capacidades-los.md) | CONCLUÍDO |
+| 2025-06-30 | [Validação e Correção dos Exemplos LOS](../../temp-todo/20250630-183500-validacao-exemplos-los.md) | CONCLUÍDO |
+| 2025-06-30 | [Correção das Limitações da Linguagem LOS](../../temp-todo/20250630-190000-correcao-limitacoes-los.md) | CONCLUÍDO |

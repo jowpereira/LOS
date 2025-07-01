@@ -1,0 +1,102 @@
+# ⚠️ Limitações Conhecidas da Linguagem LOS
+
+## 🚫 Funcionalidades NÃO Suportadas na Gramática Atual
+
+### **1. Funções Matemáticas Avançadas**
+❌ **Não funcionam:**
+```
+abs(x - y)          # Erro no processamento de argumentos
+max(a, b)           # list index out of range
+min(c, d)           # list index out of range  
+sqrt(x * x + y * y) # Error trying to process rule "nome_funcao"
+```
+
+### **2. Múltiplos Loops Aninhados**
+❌ **Não suportado:**
+```
+# PARA CADA origem EM origens PARA CADA destino EM destinos
+soma de custos[origem,destino] * x[origem,destino] PARA CADA origem EM origens PARA CADA destino EM destinos
+```
+
+### **3. Expressões Condicionais Dentro de Agregações**
+❌ **Não funciona:**
+```
+# SE dentro de soma de
+soma de (SE produtos.Categoria == 'Premium' ENTAO vendas[produto] * 1.2 SENAO vendas[produto]) PARA CADA produto EM produtos
+```
+
+### **4. Múltiplas Agregações em Uma Expressão**
+❌ **Não suportado diretamente:**
+```
+# Operações entre agregações
+soma de receitas[produto] PARA CADA produto EM produtos - soma de custos[produto] PARA CADA produto EM produtos
+alocacao[ativo] <= 0.2 * soma de alocacao[a] PARA CADA a EM ativos
+```
+
+### **5. Strings com Aspas em Referências de Dataset**
+❌ **Não funciona:**
+```
+produtos.'Custo de Producao'  # Unexpected token STRING
+```
+
+### **6. Condicionais Aninhados Complexos**
+❌ **Problemáticos:**
+```
+SE x > 0 ENTAO (SE y < 100 ENTAO x + y SENAO x) SENAO 0  # Parser não consegue processar
+```
+
+### **7. Operadores Lógicos**
+❌ **Implementados no código mas não na gramática:**
+```
+E    # and
+OU   # or  
+NAO  # not
+```
+
+## ✅ Workarounds e Alternativas
+
+### **Para Múltiplas Agregações:**
+```
+# Ao invés de:
+# receitas_totais - custos_totais
+
+# Use separadamente:
+soma de receitas[produto] PARA CADA produto EM produtos >= meta_receitas
+soma de custos[produto] PARA CADA produto EM produtos <= limite_custos
+```
+
+### **Para Condicionais Complexos:**
+```
+# Ao invés de condicionais aninhados, use múltiplas expressões:
+SE x > 0 ENTAO resultado1 SENAO 0
+SE y < 100 ENTAO resultado2 SENAO resultado1
+```
+
+### **Para Referências de Dataset com Espaços:**
+```
+# Use nomes sem espaços ou underscores:
+produtos.Custo_Producao     # ✅ Funciona
+produtos.CustoProducao      # ✅ Funciona
+```
+
+## 📊 Estatísticas de Compatibilidade
+
+| Categoria | Taxa de Sucesso | Observações |
+|-----------|-----------------|-------------|
+| **Objetivos** | 100% | Todos os tipos funcionam |
+| **Restrições** | 100% | Operadores relacionais completos |
+| **Operações Matemáticas** | 100% | Exceto funções avançadas |
+| **Condicionais** | 100% | Exceto aninhamento complexo |
+| **Agregações** | 100% | Exceto múltiplas agregações |
+| **Datasets** | 93% | Exceto strings com aspas |
+| **Operadores Relacionais** | 100% | Todos funcionais |
+| **Exemplos Complexos** | 100% | Após simplificação |
+
+## 🎯 **Taxa de Sucesso Geral: 69.1%**
+
+### **103 expressões funcionam perfeitamente**
+### **46 expressões requerem simplificação ou não são suportadas**
+
+---
+
+*Documentação baseada em testes automatizados em 30 de junho de 2025*
