@@ -1,0 +1,59 @@
+# Problema Real: Maximização de Lucro
+# Baseado nos dados de produtos_exemplo.csv considerando margens
+#
+# Cenário: Maximizar lucro total considerando margens de cada produto
+# e limitações de tempo de produção
+
+# Datasets necessários:
+# - produtos: produtos_exemplo.csv
+# - ordens: ordens_exemplo.csv
+
+# =============================================================================
+# OBJETIVO: Maximizar lucro total
+# =============================================================================
+
+MAXIMIZAR: soma de (produtos.Custo_Producao * produtos.Margem_Lucro) * y[produto]
+           PARA CADA produto EM produtos.Produto
+
+# =============================================================================
+# RESTRIÇÕES
+# =============================================================================
+
+# Restrição 1: Tempo total de produção limitado (assumindo 40h por semana por planta)
+RESTRINGIR: soma de produtos.Tempo_Producao * y[produto] <= 120
+            # 120 horas = 3 plantas * 40 horas cada
+
+# Restrição 2: Não produzir mais que a demanda total
+RESTRINGIR: y[produto] <= soma de ordens.Quantidade[i] 
+                          PARA i EM ordens.index SE ordens.Produto[i] == produto
+            PARA CADA produto EM produtos.Produto
+
+# Restrição 3: Produção mínima para manter operação
+RESTRINGIR: y[produto] >= 50
+            PARA CADA produto EM produtos.Produto
+
+# Restrição 4: Balanceamento - não concentrar em um só produto
+RESTRINGIR: y[produto] <= 400
+            PARA CADA produto EM produtos.Produto
+
+# =============================================================================
+# VARIÁVEIS DE DECISÃO  
+# =============================================================================
+# y[produto] = quantidade total a produzir do produto
+
+# =============================================================================
+# ANÁLISE DOS DADOS (para referência)
+# =============================================================================
+# Lucros por unidade:
+# - PROD_A: R$25.50 * 0.30 = R$7.65
+# - PROD_B: R$18.75 * 0.25 = R$4.69  
+# - PROD_C: R$32.20 * 0.35 = R$11.27
+# - PROD_D: R$45.80 * 0.40 = R$18.32 (maior lucro!)
+# - PROD_E: R$28.90 * 0.28 = R$8.09
+#
+# Tempos de produção:
+# - PROD_A: 2.5h, PROD_B: 1.8h, PROD_C: 3.2h, PROD_D: 4.0h, PROD_E: 2.8h
+#
+# Eficiência (lucro/hora):
+# - PROD_A: R$3.06/h, PROD_B: R$2.61/h, PROD_C: R$3.52/h  
+# - PROD_D: R$4.58/h (mais eficiente!), PROD_E: R$2.89/h

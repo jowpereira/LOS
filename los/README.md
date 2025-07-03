@@ -146,6 +146,106 @@ print(f"Expressões processadas: {len(resultado.expressions)}")
 print(f"Código Python gerado: {resultado.python_code}")
 ```
 
+## 🧪 Testes com Dados Reais
+
+A biblioteca foi extensivamente testada usando dados reais de `bases_exemplos/`:
+
+### 📊 Dados de Teste Disponíveis
+
+```
+bases_exemplos/
+├── clientes_exemplo.csv    # Clientes Premium/Standard/Basic
+├── produtos_exemplo.csv    # PROD_A a PROD_E com custos
+├── ordens_exemplo.csv      # Ordens de venda com plantas
+├── estoque_exemplo.csv     # Estoque por produto/planta
+└── custos_exemplo.csv      # Custos de atraso/não atendimento
+```
+
+### 🎯 Exemplo Real Completo
+
+```python
+import pandas as pd
+from los import Expression, Variable, DatasetReference, ExpressionType, OperationType
+
+# Carregar dados reais dos CSVs
+produtos_df = pd.read_csv("../bases_exemplos/produtos_exemplo.csv")
+ordens_df = pd.read_csv("../bases_exemplos/ordens_exemplo.csv")
+custos_df = pd.read_csv("../bases_exemplos/custos_exemplo.csv")
+
+# Criar problema de otimização usando dados reais
+var_inicial = Variable(name="x", indices=("dummy",))
+modelo = Expression(
+    original_text="MINIMIZAR: custos totais de produção e atendimento",
+    expression_type=ExpressionType.OBJECTIVE,
+    operation_type=OperationType.MINIMIZE,
+    variables={var_inicial}
+)
+
+# Limpar e adicionar variáveis baseadas nos dados reais
+modelo.variables.clear()
+
+# Variáveis de produção x[produto, planta]
+for produto in produtos_df['Produto']:
+    for planta in ordens_df['Planta'].unique():
+        var = Variable(name="x", indices=(produto, planta))
+        modelo.add_variable(var)
+
+# Variáveis de atraso por cliente
+for cliente in ordens_df['Codigo_Cliente'].unique():
+    var = Variable(name="atraso", indices=(cliente,))
+    modelo.add_variable(var)
+
+# Referências aos datasets reais
+modelo.add_dataset_reference(DatasetReference("produtos", "Custo_Producao"))
+modelo.add_dataset_reference(DatasetReference("custos", "Valor_Custo"))
+modelo.add_dataset_reference(DatasetReference("ordens", "Quantidade"))
+
+# Validação do modelo
+print(f"✅ Modelo válido: {modelo.is_valid}")
+print(f"📊 Total de variáveis: {len(modelo.variables)}")
+print(f"🎯 Complexidade: {modelo.complexity.complexity_level}")
+print(f"🔗 Datasets: {modelo.get_dataset_names()}")
+
+# Análise de complexidade detalhada
+print(f"\n📈 Métricas de Complexidade:")
+print(f"  - Variáveis: {modelo.complexity.variable_count}")
+print(f"  - Operações: {modelo.complexity.operation_count}")
+print(f"  - Nível: {modelo.complexity.nesting_level}")
+print(f"  - Total: {modelo.complexity.total_complexity}")
+
+# Conversão para código PuLP
+if modelo.is_valid:
+    codigo_pulp = modelo.to_pulp_code()
+    print(f"\n🐍 Código PuLP gerado:")
+    print(f"  {codigo_pulp}")
+
+# Serialização para análise
+modelo_dict = modelo.to_dict()
+print(f"\n📄 JSON do modelo: {len(str(modelo_dict))} caracteres")
+```
+
+### 🧪 Suite de Testes
+
+Execute os testes para validar tudo:
+
+```bash
+# Todos os testes com dados reais
+python -m pytest tests/test_los_dados_reais.py -v
+
+# Resultado esperado:
+# ✅ test_validacao_dados_bases_exemplos PASSED
+# ✅ test_criacao_expression_com_dados_reais PASSED  
+# ✅ test_variable_com_indices_multiplos_dados_reais PASSED
+# ✅ test_dataset_reference_com_colunas_reais PASSED
+# ✅ test_expression_complexa_com_dados_reais PASSED
+# ✅ test_restricao_capacidade_com_dados_reais PASSED
+# ✅ test_fluxo_completo_com_dados_reais PASSED
+# ✅ test_validacao_business_rules_com_dados_reais PASSED
+# ✅ test_metricas_complexidade_dados_reais PASSED
+# ✅ test_to_pulp_code_com_dados_reais PASSED
+# 10 passed, 1 warning
+```
+
 ## 🏗️ Arquitetura
 
 A biblioteca LOS segue os princípios de Clean Architecture:

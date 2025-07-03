@@ -14,4 +14,14 @@ priority: 100
 
 ```
 
+3. Entenda o contexto do chat, se o chat não estiver ligado a um plano, crie um novo /novo-plano:
+   - Copie `.github/templates/plano-acao.md` para `/temp-todo/YYYYMMDD-HHmmss-<slug>.md`.
+   - Preencha `<Título da Tarefa>`, `<resumo da solicitação>`, timestamps.
+     - Consulte o horário UTC atual da máquina local.
+   - Gere automaticamente a seção **☑️ Checklist de Subtarefas**.
+   - Acrescente linha em `docs/memory/index.md`:
+
+```
+
 _Isso deve acionar a atualização automática do Checklist._
+```

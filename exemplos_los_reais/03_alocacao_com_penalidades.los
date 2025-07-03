@@ -1,0 +1,79 @@
+# Problema Real: Minimização de Custos com Penalidades por Não Atendimento
+# Baseado nos dados de custos_exemplo.csv e clientes_exemplo.csv
+#
+# Cenário: Minimizar custos considerando penalidades diferenciadas
+# por tipo de cliente (Premium, Standard, Basic)
+
+# Datasets necessários:
+# - clientes: clientes_exemplo.csv
+# - custos: custos_exemplo.csv  
+# - ordens: ordens_exemplo.csv
+# - produtos: produtos_exemplo.csv
+
+# =============================================================================
+# OBJETIVO: Minimizar custos totais + penalidades
+# =============================================================================
+
+MINIMIZAR: 
+    # Custos de produção
+    soma de produtos.Custo_Producao * z[produto, cliente] 
+    PARA CADA produto EM produtos.Produto, cliente EM clientes.Codigo_Cliente
+    
+    +
+    
+    # Penalidades por atraso (baseadas no tipo de cliente)
+    soma de custos.Valor_Custo * atraso[cliente]
+    PARA EACH cliente EM clientes.Codigo_Cliente, 
+              tipo EM custos.Tipo_Cliente SE tipo == clientes.Tipo_Cliente[cliente]
+              AND custos.Tipo_Custo == 'Atraso'
+
+# =============================================================================
+# RESTRIÇÕES
+# =============================================================================
+
+# Restrição 1: Atender demanda mínima por cliente (80% da ordem)
+RESTRINGIR: soma de z[ordens.Produto[i], ordens.Codigo_Cliente[i]] >= 0.8 * ordens.Quantidade[i]
+            PARA CADA i EM ordens.index
+
+# Restrição 2: Clientes Premium têm prioridade - mínimo 95% de atendimento
+RESTRINGIR: soma de z[ordens.Produto[i], ordens.Codigo_Cliente[i]] >= 0.95 * ordens.Quantidade[i]
+            PARA CADA i EM ordens.index SE clientes.Tipo_Cliente[ordens.Codigo_Cliente[i]] == 'Premium'
+
+# Restrição 3: Limitação de capacidade total por produto
+RESTRINGIR: soma de z[produto, cliente] <= 500
+            PARA CADA produto EM produtos.Produto, cliente EM clientes.Codigo_Cliente
+
+# Restrição 4: Variável de atraso limitada
+RESTRINGIR: atraso[cliente] <= 10
+            PARA CADA cliente EM clientes.Codigo_Cliente
+
+# Restrição 5: Não negatividade
+RESTRINGIR: z[produto, cliente] >= 0
+            PARA CADA produto EM produtos.Produto, cliente EM clientes.Codigo_Cliente
+
+RESTRINGIR: atraso[cliente] >= 0
+            PARA CADA cliente EM clientes.Codigo_Cliente
+
+# =============================================================================
+# VARIÁVEIS DE DECISÃO
+# =============================================================================
+# z[produto, cliente] = quantidade do produto alocada para o cliente
+# atraso[cliente] = dias de atraso para o cliente
+
+# =============================================================================
+# ANÁLISE DE PENALIDADES (para referência)  
+# =============================================================================
+# Custos de atraso por tipo de cliente:
+# - Premium: R$15/dia (alta penalidade)
+# - Standard: R$10/dia (média penalidade)  
+# - Basic: R$5/dia (baixa penalidade)
+#
+# Custos de não atendimento:
+# - Premium: R$100 (crítico)
+# - Standard: R$75 (importante)
+# - Basic: R$50 (moderado)
+#
+# Estratégia ótima esperada: 
+# 1. Priorizar clientes Premium
+# 2. Minimizar atrasos para todos
+# 3. Balancear custos de produção vs penalidades

@@ -1,6 +1,7 @@
 ---
 applyTo: ".git/**"
 mode: commitMessageGeneration
+priority: 70
 ---
 • Use Conventional Commits em PT-BR, imperativo, máx. 72 chars.  
 • Inclua `close #<id>` ou referência equivalente.  

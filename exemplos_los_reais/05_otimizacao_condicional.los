@@ -1,0 +1,95 @@
+# Problema Real: Decisão de Produção com Condicionais
+# Baseado em todos os datasets com lógica de decisão complexa
+#
+# Cenário: Decisões de produção que dependem de condições
+# como tipo de cliente, capacidade disponível e prioridades
+
+# Datasets necessários:
+# - todos os CSVs de bases_exemplos
+
+# =============================================================================
+# OBJETIVO: Minimizar custos com decisões condicionais
+# =============================================================================
+
+MINIMIZAR:
+    # Custo base de produção
+    soma de produtos.Custo_Producao * v[produto, planta]
+    PARA CADA produto EM produtos.Produto, planta EM ['PLANTA_1', 'PLANTA_2', 'PLANTA_3']
+    
+    +
+    
+    # Custo adicional SE produção exceder capacidade normal
+    soma de SE(v[produto, planta] > capacidade_normal[produto, planta],
+               10 * produtos.Custo_Producao * (v[produto, planta] - capacidade_normal[produto, planta]),
+               0)
+    PARA CADA produto EM produtos.Produto, planta EM ['PLANTA_1', 'PLANTA_2', 'PLANTA_3']
+
+# =============================================================================
+# RESTRIÇÕES COM CONDICIONAIS
+# =============================================================================
+
+# Restrição 1: Produção prioritária para clientes Premium
+RESTRINGIR: SE(clientes.Tipo_Cliente[cliente] == 'Premium',
+               soma de v[ordens.Produto[i], ordens.Planta[i]] >= ordens.Quantidade[i],
+               soma de v[ordens.Produto[i], ordens.Planta[i]] >= 0.8 * ordens.Quantidade[i])
+            PARA CADA i EM ordens.index, cliente EM ordens.Codigo_Cliente[i]
+
+# Restrição 2: Ativação de planta baseada em volume mínimo
+RESTRINGIR: SE(soma de v[produto, planta] PARA produto EM produtos.Produto >= 100,
+               ativa_planta[planta] == 1,
+               ativa_planta[planta] == 0)
+            PARA EACH planta EM ['PLANTA_1', 'PLANTA_2', 'PLANTA_3']
+
+# Restrição 3: Produção só SE planta estiver ativa
+RESTRINGIR: v[produto, planta] <= SE(ativa_planta[planta] == 1, 1000, 0)
+            PARA EACH produto EM produtos.Produto, planta EM ['PLANTA_1', 'PLANTA_2', 'PLANTA_3']
+
+# Restrição 4: Hora extra SE exceder tempo normal
+RESTRINGIR: tempo_normal + hora_extra[planta] >= 
+            soma de produtos.Tempo_Producao * v[produto, planta]
+            PARA EACH planta EM ['PLANTA_1', 'PLANTA_2', 'PLANTA_3']
+            
+ONDE tempo_normal == 40  # horas normais por semana
+
+# Restrição 5: Limite de hora extra por planta
+RESTRINGIR: hora_extra[planta] <= SE(ativa_planta[planta] == 1, 20, 0)
+            PARA EACH planta EM ['PLANTA_1', 'PLANTA_2', 'PLANTA_3']
+
+# Restrição 6: Decisão de produto premium (alta margem) SE demanda alta
+RESTRINGIR: produz_premium[produto] == SE(
+                soma de ordens.Quantidade[i] PARA i EM ordens.index 
+                    SE ordens.Produto[i] == produto > 200,
+                1, 0)
+            PARA EACH produto EM produtos.Produto
+
+# Restrição 7: Alocação especial para produtos premium
+RESTRINGIR: v[produto, planta] >= SE(produz_premium[produto] == 1, 50, 0)
+            PARA EACH produto EM produtos.Produto, planta EM ['PLANTA_1', 'PLANTA_2', 'PLANTA_3']
+
+# =============================================================================
+# VARIÁVEIS DE DECISÃO
+# =============================================================================
+# v[produto, planta] = quantidade a produzir (variável contínua)
+# ativa_planta[planta] = 1 se planta ativa, 0 caso contrário (binária)
+# hora_extra[planta] = horas extras na planta (contínua)
+# produz_premium[produto] = 1 se produto é considerado premium, 0 cc (binária)
+
+# =============================================================================
+# PARÂMETROS CALCULADOS (para referência)
+# =============================================================================
+# Capacidade normal por planta (baseada no estoque médio):
+# - PLANTA_1: ~180 unidades
+# - PLANTA_2: ~140 unidades  
+# - PLANTA_3: ~160 unidades
+#
+# Produtos com demanda alta (>200 unidades total):
+# - PROD_A: 430 unidades (Premium)
+# - PROD_B: 540 unidades (Premium)
+# - PROD_D: 460 unidades (Premium)
+# - PROD_E: 390 unidades (Premium)
+# 
+# Produtos com demanda baixa (<200 unidades):
+# - PROD_C: 165 unidades (Normal)
+#
+# Custos de hora extra: 50% adicional sobre custo normal
+# Penalidade por não ativar planta: custos fixos desperdiçados

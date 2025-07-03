@@ -1,0 +1,53 @@
+# Problema Real: Minimização de Custos de Produção
+# Baseado nos dados de produtos_exemplo.csv e ordens_exemplo.csv
+# 
+# Cenário: Uma empresa precisa decidir quanto produzir de cada produto
+# em cada planta para minimizar custos totais de produção
+
+# Datasets necessários:
+# - produtos: produtos_exemplo.csv  
+# - ordens: ordens_exemplo.csv
+# - estoque: estoque_exemplo.csv
+
+# =============================================================================
+# OBJETIVO: Minimizar custos totais de produção
+# =============================================================================
+
+MINIMIZAR: soma de produtos.Custo_Producao * x[produto, planta] 
+           PARA CADA produto EM produtos.Produto, planta EM ['PLANTA_1', 'PLANTA_2', 'PLANTA_3']
+
+# =============================================================================
+# RESTRIÇÕES
+# =============================================================================
+
+# Restrição 1: Atender demanda de cada ordem
+RESTRINGIR: soma de x[ordens.Produto[i], ordens.Planta[i]] PARA i EM ordens.index >= ordens.Quantidade[i]
+            PARA CADA i EM ordens.index
+
+# Restrição 2: Não exceder capacidade de estoque disponível
+RESTRINGIR: x[produto, planta] <= estoque.Quantidade_Disponivel[produto, planta]
+            PARA CADA produto EM produtos.Produto, planta EM estoque.Planta
+
+# Restrição 3: Produção não negativa
+RESTRINGIR: x[produto, planta] >= 0
+            PARA CADA produto EM produtos.Produto, planta EM ['PLANTA_1', 'PLANTA_2', 'PLANTA_3']
+
+# =============================================================================
+# VARIÁVEIS DE DECISÃO
+# =============================================================================
+# x[produto, planta] = quantidade a produzir do produto na planta
+
+# =============================================================================
+# DADOS REAIS (para referência)
+# =============================================================================
+# Produtos: PROD_A (R$25.50), PROD_B (R$18.75), PROD_C (R$32.20), 
+#           PROD_D (R$45.80), PROD_E (R$28.90)
+# 
+# Plantas: PLANTA_1, PLANTA_2, PLANTA_3
+#
+# Demandas totais esperadas:
+# - PROD_A: 430 unidades (ordens 1, 3, 7)
+# - PROD_B: 540 unidades (ordens 2, 5, 11) 
+# - PROD_C: 165 unidades (ordens 4, 9)
+# - PROD_D: 460 unidades (ordens 6, 10)
+# - PROD_E: 390 unidades (ordens 8, 12)

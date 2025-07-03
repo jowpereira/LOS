@@ -1,11 +1,11 @@
 ---
 applyTo: "**/*"
-priority: 75
+priority: 65
+mode: disabled
 ---
-Quando detectar `done: true` **e** ainda não existir hash de commit:
+**NOTA:** Esta instrução foi DESABILITADA. A funcionalidade foi movida para finalization.instructions.md (priority 85) para garantir execução síncrona.
 
-1. Copie o plano de `/temp-todo/` → `docs/memory/drafts/`
-   (nome `YYYYMMDD-<slug>.md`).
-2. Em `docs/memory/index.md`, troque **PENDENTE** → **CONCLUÍDO / SEM COMMIT**
-   e adicione o caminho do draft.
-3. Opcional: remova plano de `/temp-todo/` ou mova para `/temp-archive/`.
+**FUNÇÃO ORIGINAL:** Arquivamento após validação
+**NOVA IMPLEMENTAÇÃO:** finalization.instructions.md executa todo o fluxo atomicamente
+
+Esta instrução permanece como backup/referência, mas não será executada devido ao `mode: disabled`.
