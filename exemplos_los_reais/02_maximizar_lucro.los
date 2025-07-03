@@ -19,9 +19,9 @@ MAXIMIZAR: soma de (produtos.Custo_Producao * produtos.Margem_Lucro) * y[produto
 # RESTRIÇÕES
 # =============================================================================
 
-# Restrição 1: Tempo total de produção limitado (assumindo 40h por semana por planta)
-RESTRINGIR: soma de produtos.Tempo_Producao * y[produto] <= 120
-            # 120 horas = 3 plantas * 40 horas cada
+# Restrição 1: Tempo total de produção limitado (assumindo 120h por semana por planta)
+RESTRINGIR: soma de produtos.Tempo_Producao * y[produto] <= 1200
+            # 1200 horas = 3 plantas * 400 horas cada (capacidade expandida)
 
 # Restrição 2: Não produzir mais que a demanda total
 RESTRINGIR: y[produto] <= soma de ordens.Quantidade[i] 

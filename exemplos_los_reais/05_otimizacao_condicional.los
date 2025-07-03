@@ -38,33 +38,33 @@ RESTRINGIR: SE(clientes.Tipo_Cliente[cliente] == 'Premium',
 RESTRINGIR: SE(soma de v[produto, planta] PARA produto EM produtos.Produto >= 100,
                ativa_planta[planta] == 1,
                ativa_planta[planta] == 0)
-            PARA EACH planta EM ['PLANTA_1', 'PLANTA_2', 'PLANTA_3']
+            PARA CADA planta EM ['PLANTA_1', 'PLANTA_2', 'PLANTA_3']
 
 # Restrição 3: Produção só SE planta estiver ativa
 RESTRINGIR: v[produto, planta] <= SE(ativa_planta[planta] == 1, 1000, 0)
-            PARA EACH produto EM produtos.Produto, planta EM ['PLANTA_1', 'PLANTA_2', 'PLANTA_3']
+            PARA CADA produto EM produtos.Produto, planta EM ['PLANTA_1', 'PLANTA_2', 'PLANTA_3']
 
 # Restrição 4: Hora extra SE exceder tempo normal
 RESTRINGIR: tempo_normal + hora_extra[planta] >= 
             soma de produtos.Tempo_Producao * v[produto, planta]
-            PARA EACH planta EM ['PLANTA_1', 'PLANTA_2', 'PLANTA_3']
+            PARA CADA planta EM ['PLANTA_1', 'PLANTA_2', 'PLANTA_3']
             
 ONDE tempo_normal == 40  # horas normais por semana
 
 # Restrição 5: Limite de hora extra por planta
 RESTRINGIR: hora_extra[planta] <= SE(ativa_planta[planta] == 1, 20, 0)
-            PARA EACH planta EM ['PLANTA_1', 'PLANTA_2', 'PLANTA_3']
+            PARA CADA planta EM ['PLANTA_1', 'PLANTA_2', 'PLANTA_3']
 
 # Restrição 6: Decisão de produto premium (alta margem) SE demanda alta
 RESTRINGIR: produz_premium[produto] == SE(
                 soma de ordens.Quantidade[i] PARA i EM ordens.index 
                     SE ordens.Produto[i] == produto > 200,
                 1, 0)
-            PARA EACH produto EM produtos.Produto
+            PARA CADA produto EM produtos.Produto
 
 # Restrição 7: Alocação especial para produtos premium
 RESTRINGIR: v[produto, planta] >= SE(produz_premium[produto] == 1, 50, 0)
-            PARA EACH produto EM produtos.Produto, planta EM ['PLANTA_1', 'PLANTA_2', 'PLANTA_3']
+            PARA CADA produto EM produtos.Produto, planta EM ['PLANTA_1', 'PLANTA_2', 'PLANTA_3']
 
 # =============================================================================
 # VARIÁVEIS DE DECISÃO

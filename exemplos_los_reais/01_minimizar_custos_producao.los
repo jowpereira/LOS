@@ -20,8 +20,8 @@ MINIMIZAR: soma de produtos.Custo_Producao * x[produto, planta]
 # RESTRIÇÕES
 # =============================================================================
 
-# Restrição 1: Atender demanda de cada ordem
-RESTRINGIR: soma de x[ordens.Produto[i], ordens.Planta[i]] PARA i EM ordens.index >= ordens.Quantidade[i]
+# Restrição 1: Atender demanda de cada ordem individualmente
+RESTRINGIR: x[ordens.Produto[i], ordens.Planta[i]] >= ordens.Quantidade[i]
             PARA CADA i EM ordens.index
 
 # Restrição 2: Não exceder capacidade de estoque disponível

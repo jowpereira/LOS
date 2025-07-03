@@ -23,7 +23,7 @@ MINIMIZAR:
     
     # Penalidades por atraso (baseadas no tipo de cliente)
     soma de custos.Valor_Custo * atraso[cliente]
-    PARA EACH cliente EM clientes.Codigo_Cliente, 
+    PARA CADA cliente EM clientes.Codigo_Cliente, 
               tipo EM custos.Tipo_Cliente SE tipo == clientes.Tipo_Cliente[cliente]
               AND custos.Tipo_Custo == 'Atraso'
 
