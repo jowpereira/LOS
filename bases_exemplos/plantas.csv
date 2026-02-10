@@ -1,0 +1,5 @@
+Planta,Cidade,Capacidade_Max,Custo_Fixo,Custo_Hora_Extra,Horas_Disponiveis
+P1,São Paulo,5000,120000,45,2000
+P2,Curitiba,3500,85000,38,1800
+P3,Belo Horizonte,4200,95000,42,1900
+P4,Porto Alegre,2800,72000,35,1600

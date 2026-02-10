@@ -3,9 +3,9 @@
 Arquitetura modular baseada em Clean Architecture
 """
 
-__version__ = "2.0.0"
+__version__ = "3.1.1"
 __author__ = "Jonathan Pereira"
-__email__ = "jonathan@example.com"
+__email__ = ""
 
 # Principais interfaces públicas
 from .domain.entities.expression import Expression

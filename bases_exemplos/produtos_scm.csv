@@ -1,0 +1,7 @@
+Produto,Categoria,Margem_Unitaria,Tempo_Producao_Hr,Peso_Kg,Volume_M3,Custo_Materia_Prima
+ALPHA,Premium,85.50,0.8,12.5,0.045,32.00
+BETA,Standard,42.30,0.5,8.0,0.030,18.50
+GAMMA,Economy,28.75,0.3,5.2,0.018,12.00
+DELTA,Premium,92.10,1.2,15.0,0.055,45.00
+EPSILON,Standard,55.00,0.6,9.5,0.035,22.00
+ZETA,Economy,31.40,0.35,6.0,0.020,14.50

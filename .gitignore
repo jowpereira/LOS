@@ -109,3 +109,8 @@ backup/
 
 # Tests are included
 !tests/
+
+/logs
+/bases_exemplos
+/exemplos_los_reais
+/modelos
