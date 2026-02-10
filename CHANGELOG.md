@@ -1,5 +1,28 @@
 # Changelog
 
+## [3.2.0] - 2026-02-09 — Public API (A01-A04)
+### ✨ New Public API
+- [ADD] `los.compile(source)` — compila texto LOS ou arquivo `.los` → `LOSModel` (A01)
+- [ADD] `LOSModel.solve(backend, time_limit, msg)` — executa modelo e retorna `LOSResult` (A02)
+- [ADD] `LOSResult` — `.status`, `.objective`, `.variables`, `.time`, `.is_optimal`, `.non_zero_variables` (A03)
+- [ADD] `los.solve(source)` — atalho compile + solve (A04)
+
+### 🏗️ New Files
+- [ADD] `los/domain/entities/los_model.py` — LOSModel entity
+- [ADD] `los/domain/entities/los_result.py` — LOSResult entity
+- [ADD] `los/application/compiler.py` — pipeline parse→translate→model
+- [ADD] `tests/test_public_api.py` — 28 testes (7 compile, 8 solve, 9 result, 4 shortcut)
+
+### 🐛 Bug Fix
+- [FIX] `_resolve_source` — multi-line text com `\n` causava crash no `Path.exists()` no Windows
+
+### 📊 Resultados
+- **158 testes** passando (28 novos + 130 existentes)
+- Zero regressões
+- API testada com min/max/binary/bounded LPs e arquivo `.los` complexo
+
+---
+
 ## [3.1.1] - 2026-02-09 — Supply Chain E2E Integration
 ### ✨ Features
 - [ADD] Modelo complexo `modelos/supply_chain_network.los` — Supply Chain Network Design com 4 plantas × 6 produtos × 8 clientes
