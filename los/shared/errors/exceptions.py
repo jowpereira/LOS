@@ -4,10 +4,9 @@ Exceções específicas do domínio LOS para melhor rastreabilidade
 """
 
 from typing import Any, Dict, Optional, List
-from abc import ABC
 
 
-class LOSError(Exception, ABC):
+class LOSError(Exception):
     """
     Classe base para todas as exceções do sistema LOS
     Implementa estrutura consistente de erros com contexto
@@ -171,6 +170,22 @@ class FileError(LOSError):
         )
 
 
+class InternalError(LOSError):
+    """Erro interno não esperado"""
+    
+    def __init__(
+        self, 
+        message: str, 
+        original_exception: Optional[Exception] = None
+    ):
+        super().__init__(
+            message=message,
+            error_code='INTERNAL_ERROR',
+            context={},
+            original_exception=original_exception
+        )
+
+
 # Factory para converter exceções padrão em LOSError
 def wrap_exception(
     exception: Exception, 
@@ -179,22 +194,15 @@ def wrap_exception(
     context: Optional[Dict[str, Any]] = None
 ) -> LOSError:
     """
-    Converte exceção padrão em LOSError
-    
-    Args:
-        exception: Exceção original
-        message: Mensagem customizada (opcional)
-        error_code: Código do erro
-        context: Contexto adicional
-        
-    Returns:
-        LOSError wrapping a exceção original
+    Converte exceção padrão em LOSError (InternalError)
     """
     final_message = message or str(exception)
     
-    return LOSError(
+    # Se já for LOSError, retorna ela mesma
+    if isinstance(exception, LOSError):
+        return exception
+        
+    return InternalError(
         message=final_message,
-        error_code=error_code,
-        context=context,
         original_exception=exception
     )

@@ -4,7 +4,10 @@ Interfaces para adaptadores externos e infraestrutura
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ...domain.entities.expression import Expression
 
 from ..dto.expression_dto import (
     ExpressionRequestDTO,
@@ -20,7 +23,7 @@ class IParserAdapter(ABC):
     """Interface para adaptadores de parser"""
     
     @abstractmethod
-    async def parse(self, text: str) -> Any:
+    def parse(self, text: str) -> Any:
         """
         Realiza parsing de texto
         
@@ -33,7 +36,7 @@ class IParserAdapter(ABC):
         pass
     
     @abstractmethod
-    async def validate_syntax(self, text: str) -> bool:
+    def validate_syntax(self, text: str) -> bool:
         """
         Valida sintaxe do texto
         
@@ -50,26 +53,27 @@ class ITranslatorAdapter(ABC):
     """Interface para adaptadores de tradução"""
     
     @abstractmethod
-    async def translate(self, request: TranslationRequestDTO) -> TranslationResponseDTO:
+    def translate(self, request: TranslationRequestDTO) -> TranslationResponseDTO:
+        """Traduz expressão via DTO (legacy)"""
+        pass
+    
+    @abstractmethod
+    def translate_expression(self, expression: 'Expression') -> str:
         """
-        Traduz expressão para linguagem alvo
+        F03: Traduz entidade Expression (com AST) para código alvo.
+        Este é o método principal de tradução.
         
         Args:
-            request: Dados da requisição de tradução
+            expression: Entidade Expression com syntax_tree populada
             
         Returns:
-            Resultado da tradução
+            Código traduzido como string
         """
         pass
     
     @abstractmethod
     def get_supported_languages(self) -> List[str]:
-        """
-        Retorna linguagens suportadas
-        
-        Returns:
-            Lista de linguagens suportadas
-        """
+        """Retorna linguagens suportadas"""
         pass
 
 
@@ -77,7 +81,7 @@ class IValidatorAdapter(ABC):
     """Interface para adaptadores de validação"""
     
     @abstractmethod
-    async def validate(self, request: ValidationRequestDTO) -> ValidationResponseDTO:
+    def validate(self, request: ValidationRequestDTO) -> ValidationResponseDTO:
         """
         Valida expressão segundo regras específicas
         
@@ -104,7 +108,7 @@ class ICacheAdapter(ABC):
     """Interface para adaptadores de cache"""
     
     @abstractmethod
-    async def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Optional[Any]:
         """
         Recupera valor do cache
         
@@ -117,7 +121,7 @@ class ICacheAdapter(ABC):
         pass
     
     @abstractmethod
-    async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
         """
         Armazena valor no cache
         
@@ -132,7 +136,7 @@ class ICacheAdapter(ABC):
         pass
     
     @abstractmethod
-    async def delete(self, key: str) -> bool:
+    def delete(self, key: str) -> bool:
         """
         Remove valor do cache
         
@@ -145,7 +149,7 @@ class ICacheAdapter(ABC):
         pass
     
     @abstractmethod
-    async def clear(self) -> bool:
+    def clear(self) -> bool:
         """
         Limpa todo o cache
         
@@ -159,7 +163,7 @@ class IFileAdapter(ABC):
     """Interface para adaptadores de arquivo"""
     
     @abstractmethod
-    async def read_file(self, file_path: str, encoding: str = "utf-8") -> str:
+    def read_file(self, file_path: str, encoding: str = "utf-8") -> str:
         """
         Lê conteúdo de arquivo
         
@@ -173,7 +177,7 @@ class IFileAdapter(ABC):
         pass
     
     @abstractmethod
-    async def write_file(
+    def write_file(
         self, 
         file_path: str, 
         content: str, 
@@ -193,7 +197,7 @@ class IFileAdapter(ABC):
         pass
     
     @abstractmethod
-    async def file_exists(self, file_path: str) -> bool:
+    def file_exists(self, file_path: str) -> bool:
         """
         Verifica se arquivo existe
         
@@ -210,7 +214,7 @@ class INotificationAdapter(ABC):
     """Interface para adaptadores de notificação"""
     
     @abstractmethod
-    async def send_notification(
+    def send_notification(
         self,
         message: str,
         level: str = "info",

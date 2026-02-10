@@ -2,6 +2,6 @@
 Infrastructure translators
 """
 
-from .pulp_translator import PuLPTranslator, BaseTranslator
+from .pulp_translator import PuLPTranslator
 
-__all__ = ['PuLPTranslator', 'BaseTranslator']
+__all__ = ['PuLPTranslator']

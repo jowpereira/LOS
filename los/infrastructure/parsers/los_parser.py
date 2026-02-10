@@ -1,6 +1,6 @@
 """
-🔧 LOS Parser - Implementação Lark
-Parser modularizado baseado em Lark para a linguagem LOS
+🔧 LOS Parser - Implementação Lark v3
+Parser modularizado baseado em Lark para a linguagem LOS v3
 """
 
 import re
@@ -25,7 +25,7 @@ from ...shared.logging.logger import get_logger
 
 class LOSTransformer(Transformer):
     """
-    Transformer Lark especializado para LOS
+    Transformer Lark especializado para LOS v3
     Converte árvore sintática em estruturas de dados
     """
     
@@ -40,272 +40,309 @@ class LOSTransformer(Transformer):
             'conditional_count': 0
         }
         self._logger = get_logger('infrastructure.parser.transformer')
-    
-    def objetivo_minimizar(self, items):
-        """MINIMIZAR: expressão"""
-        expression = str(items[0]) if items else ""
-        self.complexity_metrics['operation_count'] += 1
-        
+
+    def start(self, items):
+        """Retorna lista de statements processados"""
         return {
-            'type': 'objective',
-            'operation': 'minimize',
-            'expression': expression,
-            'code': expression
+            'type': 'model',
+            'statements': items
         }
-    
-    def objetivo_maximizar(self, items):
-        """MAXIMIZAR: expressão"""
-        expression = str(items[0]) if items else ""
-        self.complexity_metrics['operation_count'] += 1
-        
-        return {
-            'type': 'objective',
-            'operation': 'maximize',
-            'expression': expression,
-            'code': expression
-        }
-    
-    def expressao_condicional(self, items):
-        """SE condição ENTAO expr1 SENAO expr2"""
-        if len(items) < 3:
-            raise ValueError(f"Expressão condicional malformada: {items}")
-        
-        condition = str(items[0])
-        expr_then = str(items[1])
-        expr_else = str(items[2])
-        
-        self.complexity_metrics['conditional_count'] += 1
-        self.complexity_metrics['nesting_level'] += 1
-        
-        code = f"{expr_then} if {condition} else {expr_else}"
-        return {
-            'type': 'conditional',
-            'operation': 'if_then_else',
-            'expression': code,
-            'code': code
-        }
-    
-    def operacao_aditiva(self, items):
-        """Operações + e -"""
-        if len(items) < 3:
-            return str(items[0]) if items else ""
-        
-        left = str(items[0])
-        operator = str(items[1])
-        right = str(items[2])
-        
-        self.complexity_metrics['operation_count'] += 1
-        
-        # Adicionar parênteses se necessário para operações aninhadas
-        if ' - ' in right and operator == '-':
-            right = f"({right})"
-        
-        return f"{left} {operator} {right}"
-    
-    def operacao_multiplicativa(self, items):
-        """Operações *, /, //, %"""
-        if len(items) < 3:
-            return str(items[0]) if items else ""
-        
-        left = str(items[0])
-        operator = str(items[1])
-        right = str(items[2])
-        
-        self.complexity_metrics['operation_count'] += 1
-        
-        # Adicionar parênteses se necessário para divisão aninhada
-        if ' / ' in right and operator == '/':
-            right = f"({right})"
-        
-        return f"{left} {operator} {right}"
-    
-    def variavel_indexada(self, items):
-        """x[i], y[j], transporte[origem,destino]"""
-        if len(items) < 2:
-            return str(items[0]) if items else ""
-        
+
+    # --- IMPORTS ---
+    def import_model(self, items):
+        # items[0] is {'type': 'string', 'value': ...}
+        path_node = items[0]
+        path = path_node.get('value') if isinstance(path_node, dict) else str(path_node).strip('"\'')
+        return {'type': 'import', 'path': path}
+
+    # --- SETS ---
+    def set_declaration(self, items):
         name = str(items[0])
-        indices_tree = items[1]
-        
-        # Processar índices
-        if hasattr(indices_tree, 'children'):
-            indices = []
-            for token in indices_tree.children:
-                if hasattr(token, 'value'):
-                    indices.append(token.value)
-                else:
-                    indices.append(str(token))
-            indices_tuple = tuple(indices)
-        else:
-            indices_tuple = (str(indices_tree),)
-        
-        # Criar objeto Variable
-        variable = Variable(name=name, indices=indices_tuple)
-        self.variables_found.add(variable)
-        
-        return variable.to_python_code()
+        value = items[1] if len(items) > 1 else None
+        return {'type': 'set', 'name': name, 'value': value}
+
+    def set_literal(self, items):
+        # set_elements returns a list, so items is [[exprs]]
+        # If set_elements matched nothing (empty set), items might be [None] or []
+        elements = items[0] if items and items[0] else []
+        return {'type': 'set_literal', 'elements': elements}
+
+    def set_range(self, items):
+        return {'type': 'set_range', 'start': items[0], 'end': items[1]}
     
-    def referencia_dataset(self, items):
-        """dataset.coluna"""
-        if len(items) < 2:
-            return str(items[0]) if items else ""
-        
-        dataset_name = str(items[0])
-        column_name = str(items[1])
-        
-        # Criar referência ao dataset
-        dataset_ref = DatasetReference(
-            dataset_name=dataset_name,
-            column_name=column_name
-        )
-        self.datasets_found.add(dataset_ref)
-        
-        return dataset_ref.to_python_code()
+    def set_range_step(self, items):
+        return {'type': 'set_range', 'start': items[0], 'end': items[1], 'step': items[2]}
+
+    def set_filter(self, items):
+        return {'type': 'set_filter', 'expression': items[0], 'source': str(items[1]), 'condition': items[2] if len(items) > 2 else None}
     
-    def agregacao(self, items):
-        """SOMA DE expressao [loops]"""
-        if not items:
-            return ""
+    def set_ref(self, items):
+        return {'type': 'set_ref', 'name': str(items[0])}
+
+    def set_operation(self, items):
+        return {'type': 'set_op', 'left': str(items[0]), 'op': str(items[1]), 'right': str(items[2])}
         
-        expression = str(items[0])
-        loops = str(items[1]) if len(items) > 1 else ""
+    def set_elements(self, items):
+        return items
+
+    def set_op(self, items):
+        return str(items[0])
+
+    def _extract_indices(self, indices_item):
+        """Extrai nomes dos índices de uma lista de expressões/tokens"""
+        if not indices_item:
+            return None
         
-        self.complexity_metrics['function_count'] += 1
-        self.complexity_metrics['operation_count'] += 2  # Agregação é mais complexa
+        cleaned = []
+        for item in indices_item:
+            if isinstance(item, dict) and 'name' in item:
+                cleaned.append(item['name'])
+            elif hasattr(item, 'value'): # Token?
+                cleaned.append(str(item.value))
+            else:
+                cleaned.append(str(item))
+        return cleaned
+
+    # --- PARAMETERS ---
+    def param_declaration(self, items):
+        name = str(items[0])
+        indices = None
+        value = None
         
-        if loops:
-            return f"sum({expression} {loops})"
-        else:
-            return f"sum({expression})"
+        for item in items[1:]:
+            if isinstance(item, list): 
+                indices = self._extract_indices(item)
+            else: 
+                value = item
+        
+        return {'type': 'param', 'name': name, 'indices': indices, 'value': value}
+
+    # --- VARIABLES ---
+    def var_declaration(self, items):
+        name = str(items[0])
+        indices = None
+        var_type = 'continuous'
+        bounds = None
+
+        current_idx = 1
+        # Check for indices (list)
+        if current_idx < len(items) and isinstance(items[current_idx], list):
+            indices = self._extract_indices(items[current_idx])
+            current_idx += 1
+        
+        # Check for type (string from var_type)
+        if current_idx < len(items) and isinstance(items[current_idx], str) and items[current_idx] in ['int', 'bin', 'continuous', 'inteiro', 'binario', 'continua']:
+            var_type = items[current_idx]
+            current_idx += 1
+            
+        # Check for bounds (dict)
+        if current_idx < len(items):
+            bounds = items[current_idx]
+
+        # Register variable
+        self.variables_found.add(Variable(name=name, indices=tuple(indices) if indices else ()))
+        
+        return {'type': 'var', 'name': name, 'indices': indices, 'var_type': var_type, 'bounds': bounds}
+
+    def var_type(self, items):
+        return str(items[0])
+
+    def bounds_ge_le(self, items):
+        # items: [GE, expr, (LE, expr)?]
+        # or [GE, expr]
+        # Filter out tokens to get expressions
+        exprs = [x for x in items if not isinstance(x, Token)]
+        return {'lower': exprs[0], 'upper': exprs[1] if len(exprs) > 1 else None}
     
-    def loop(self, items):
-        """PARA CADA var EM dataset [ONDE condicao]"""
-        if len(items) < 3:
-            return ""
-        
-        var_name = str(items[0])
-        dataset_name = str(items[1])
-        condition = str(items[2]) if len(items) > 2 else ""
-        
+    def bounds_le_ge(self, items):
+        # items: [LE, expr, (GE, expr)?]
+        exprs = [x for x in items if not isinstance(x, Token)]
+        return {'upper': exprs[0], 'lower': exprs[1] if len(exprs) > 1 else None}
+    
+    def bounds_eq(self, items):
+        # items: [EQ, expr]
+        exprs = [x for x in items if not isinstance(x, Token)]
+        return {'equal': exprs[0]}
+    
+    def bounds_in_set(self, items):
+        return {'set': items[0]}
+
+    # --- OBJECTIVE ---
+    def objective_decl(self, items):
         self.complexity_metrics['operation_count'] += 1
-        
-        if condition:
-            return f"for {var_name} in {dataset_name} if {condition}"
-        else:
-            return f"for {var_name} in {dataset_name}"
-    
-    def funcao_matematica(self, items):
-        """abs(x), max(a,b), etc."""
-        if not items:
-            return ""
-        
-        function_name = str(items[0])
-        arguments = str(items[1]) if len(items) > 1 else ""
-        
-        self.complexity_metrics['function_count'] += 1
-        
-        # Mapear funções LOS para Python
-        function_map = {
-            'abs': 'abs',
-            'max': 'max',
-            'min': 'min',
-            'sum': 'sum',
-            'sqrt': 'math.sqrt'
+        return {'type': 'objective', 'sense': items[0], 'expression': items[1]}
+
+    def obj_sense(self, items):
+        sense_map = {
+            'min': 'minimize', 'minimize': 'minimize', 'minimizar': 'minimize',
+            'max': 'maximize', 'maximize': 'maximize', 'maximizar': 'maximize'
         }
+        return sense_map.get(str(items[0]).lower(), 'minimize')
+
+    # --- CONSTRAINTS ---
+    def constraint_block(self, items):
+        return {'type': 'constraint_block', 'constraints': items}
+
+    def constraint_single(self, items):
+        return {'type': 'constraint_block', 'constraints': [items[0]]}
+
+    def constraint_named(self, items):
+        name = None
+        indices = None
+        expr = None
+        loops = None
         
-        python_function = function_map.get(function_name.lower(), function_name)
-        return f"{python_function}({arguments})"
-    
-    def operador_relacional(self, items):
-        """Operadores relacionais"""
-        if not items:
-            return ""
+        idx = 0
+        # Robust check for optional name
+        # First item is name if it's a Token of type IDENTIFICADOR
+        first = items[0]
+        if isinstance(first, Token) and first.type == 'IDENTIFICADOR':
+             name = str(first)
+             idx += 1
+             if idx < len(items) and isinstance(items[idx], list): # indices
+                 indices = self._extract_indices(items[idx])
+                 idx += 1
         
-        operator = str(items[0])
-        
-        # Mapear operadores LOS para Python
-        operator_map = {
-            '<=': '<=',
-            '>=': '>=',
-            '==': '==',
-            '!=': '!=',
-            '=': '==',  # LOS usa = como comparação
-            '<': '<',
-            '>': '>'
-        }
-        
-        return operator_map.get(operator, operator)
-    
-    def expressao_comparacao(self, items):
-        """expr operador expr"""
-        if len(items) < 3:
-            return str(items[0]) if items else ""
-        
-        left = str(items[0])
-        operator = str(items[1])
-        right = str(items[2])
-        
+        if idx < len(items):
+            expr = items[idx]
+            idx += 1
+        if idx < len(items):
+            loops = items[idx]
+            
+        return {'type': 'constraint', 'name': name, 'indices': indices, 'expression': expr, 'loops': loops}
+
+    # --- EXPRESSIONS & LOGIC ---
+    def add(self, items):
         self.complexity_metrics['operation_count'] += 1
+        return {'type': 'binary_op', 'op': '+', 'left': items[0], 'right': items[1]}
+    def sub(self, items):
+        self.complexity_metrics['operation_count'] += 1
+        return {'type': 'binary_op', 'op': '-', 'left': items[0], 'right': items[1]}
+    def mul(self, items):
+        self.complexity_metrics['operation_count'] += 1
+        return {'type': 'binary_op', 'op': '*', 'left': items[0], 'right': items[1]}
+    def div(self, items):
+        self.complexity_metrics['operation_count'] += 1
+        return {'type': 'binary_op', 'op': '/', 'left': items[0], 'right': items[1]}
+    def mod(self, items):
+        self.complexity_metrics['operation_count'] += 1
+        return {'type': 'binary_op', 'op': '%', 'left': items[0], 'right': items[1]}
+    def pow(self, items):
+        self.complexity_metrics['operation_count'] += 1
+        return {'type': 'binary_op', 'op': '^', 'left': items[0], 'right': items[1]}
+    
+    def number(self, items): return {'type': 'number', 'value': float(items[0])}
+    
+    def string_literal(self, items): 
+        return {'type': 'string', 'value': str(items[0]).strip('"\'')}
+    
+    def var_or_param(self, items):
+        name = str(items[0])
+        # Can't distinguish var/param without symbol table here, assuming reference
+        return {'type': 'var_ref', 'name': name}
         
-        return f"{left} {operator} {right}"
+    def dataset_coluna(self, items):
+        ref = DatasetReference(dataset_name=str(items[0]), column_name=str(items[1]))
+        self.datasets_found.add(ref)
+        return {'type': 'dataset_col', 'dataset': str(items[0]), 'col': str(items[1])}
+
+    def indexed_var(self, items):
+        name = str(items[0])
+        indices = self._extract_indices(items[1])
+        # Removed side-effect: do not register variables here, only in var_decl
+        return {'type': 'indexed_var', 'name': name, 'indices': indices}
+
+    def or_op(self, items): return {'type': 'logic_op', 'op': 'or', 'left': items[0], 'right': items[1]}
+    def and_op(self, items): return {'type': 'logic_op', 'op': 'and', 'left': items[0], 'right': items[1]}
+    def not_op(self, items): return {'type': 'logic_op', 'op': 'not', 'expr': items[0]}
     
-    def numero(self, items):
-        """Números"""
-        return str(items[0]) if items else "0"
+    def logic_comp(self, items):
+        if len(items) == 3:
+            return {'type': 'comparison', 'op': items[1], 'left': items[0], 'right': items[2]}
+        return items[0]
+
+    def rel_op(self, items): return str(items[0])
+
+    # --- SPECIAL ---
+    def sum(self, items):
+        expr = None
+        loops = None
+        for item in items:
+            if isinstance(item, dict):
+                expr = item
+            elif isinstance(item, list):
+                loops = item
+        return {'type': 'sum', 'expression': expr, 'loops': loops}
     
-    def string(self, items):
-        """Strings"""
-        return str(items[0]) if items else '""'
-    
-    def argumentos(self, items):
-        """Lista de argumentos"""
-        return ", ".join(str(item) for item in items)
-    
-    def IDENTIFICADOR(self, token):
-        """Identificadores simples"""
-        name = str(token)
+    def prod(self, items):
+        expr = None
+        loops = None
+        for item in items:
+            if isinstance(item, dict):
+                expr = item
+            elif isinstance(item, list):
+                loops = item
+        return {'type': 'prod', 'expression': expr, 'loops': loops}
         
-        # Se for um identificador isolado, considerar como variável
-        if name.isalpha():
-            variable = Variable(name=name)
-            self.variables_found.add(variable)
-        
-        return name
+    def min_func(self, items): 
+        args = [x for x in items if isinstance(x, dict)]
+        return {'type': 'function', 'name': 'min', 'args': args}
+
+    def max_func(self, items): 
+        args = [x for x in items if isinstance(x, dict)]
+        return {'type': 'function', 'name': 'max', 'args': args}
     
-    def NUMERO(self, token):
-        """Tokens de número"""
-        return str(token)
+    def func_call(self, items):
+        # F09: Rewritten — items[0] is always IDENTIFICADOR Token, items[1] is always arguments list
+        self.complexity_metrics['function_count'] += 1
+        name = str(items[0])
+        args = []
+        for item in items[1:]:
+            if isinstance(item, list):
+                args = item
+                break
+        return {'type': 'function', 'name': name, 'args': args}
     
-    def STRING(self, token):
-        """Tokens de string"""
-        return str(token)
+    def if_inline(self, items):
+        self.complexity_metrics['conditional_count'] += 1
+        args = [x for x in items if isinstance(x, dict)]
+        if len(args) == 3:
+             return {'type': 'if', 'condition': args[0], 'then': args[1], 'else': args[2]}
+        return {'type': 'if', 'error': 'Invalid arguments'}
+
+    def loop_multiplo(self, items): 
+        return [item for item in items if isinstance(item, dict)]
+    
+    def loop_simple(self, items):
+        var = str(items[0])
+        source = items[1]
+        condition = items[2] if len(items) > 2 else None
+        return {'var': var, 'source': source, 'condition': condition}
+
+    def indices(self, items): return items
+    def arguments(self, items): return items
 
 
 class LOSParser(IParserAdapter):
     """
-    Parser principal para linguagem LOS
-    Implementa interface IParserAdapter usando Lark
+    Parser principal para linguagem LOS v3
     """
+    
+    __version__ = "3.1.0"  # F19: Version tracking
     
     def __init__(self, grammar_file: Optional[str] = None):
         self._grammar_file = grammar_file or self._get_default_grammar_path()
         self._parser = None
-        self._transformer = None
         self._logger = get_logger('infrastructure.parser.los')
         self._initialize_parser()
     
     def _get_default_grammar_path(self) -> str:
-        """Retorna caminho padrão da gramática"""
-        # Gramática está na pasta los/
         current_dir = Path(__file__).parent
-        los_root = current_dir.parent.parent  # los/
+        los_root = current_dir.parent.parent
         return str(los_root / "los_grammar.lark")
     
     def _initialize_parser(self):
-        """Inicializa o parser Lark"""
         try:
-            self._logger.info(f"Carregando gramática de: {self._grammar_file}")
-            
             if not Path(self._grammar_file).exists():
                 raise FileNotFoundError(f"Arquivo de gramática não encontrado: {self._grammar_file}")
             
@@ -316,154 +353,53 @@ class LOSParser(IParserAdapter):
                 grammar_content,
                 start='start',
                 parser='lalr',
-                transformer=None  # Aplicaremos o transformer separadamente
+                transformer=None
             )
-            
-            self._transformer = LOSTransformer()
-            self._logger.info("Parser LOS inicializado com sucesso")
             
         except Exception as e:
             self._logger.error(f"Erro inicializando parser: {e}")
-            raise LOSParseError(
-                message=f"Falha ao inicializar parser: {str(e)}",
-                expression="",
-                original_exception=e
-            )
+            raise LOSParseError(f"Falha ao inicializar parser: {str(e)}", "", e)
     
-    async def parse(self, text: str) -> Dict[str, Any]:
-        """
-        Realiza parsing do texto LOS
-        
-        Args:
-            text: Texto em linguagem LOS
-            
-        Returns:
-            Resultado do parsing com metadata
-        """
+    def parse(self, text: str) -> Dict[str, Any]:
+        # F01: Fresh transformer per call — eliminates ghost state from failed parses
+        transformer = LOSTransformer()
         try:
-            self._logger.debug(f"Iniciando parsing: {text[:100]}...")
+            cleaned_text = text.strip()
             
-            # Preprocessar texto
-            cleaned_text = self._preprocess_text(text)
-            
-            # Fazer parsing com Lark
             syntax_tree = self._parser.parse(cleaned_text)
+            result = transformer.transform(syntax_tree)
             
-            # Aplicar transformer
-            result = self._transformer.transform(syntax_tree)
-            
-            # Compilar resultado final
             parse_result = {
                 'original_text': text,
-                'cleaned_text': cleaned_text,
-                'syntax_tree': syntax_tree,
-                'transformed_result': result,
-                'variables': self._transformer.variables_found.copy(),
-                'datasets': self._transformer.datasets_found.copy(),
-                'complexity': ComplexityMetrics(
-                    nesting_level=self._transformer.complexity_metrics['nesting_level'],
-                    variable_count=len(self._transformer.variables_found),
-                    operation_count=self._transformer.complexity_metrics['operation_count'],
-                    function_count=self._transformer.complexity_metrics['function_count'],
-                    conditional_count=self._transformer.complexity_metrics['conditional_count']
-                ),
-                'success': True,
-                'errors': []
+                'parsed_result': result,
+                'variables': list(transformer.variables_found),
+                'datasets': list(transformer.datasets_found),
+                'complexity': transformer.complexity_metrics,
+                'success': True
             }
             
-            # Limpar estado do transformer para próxima execução
-            self._transformer.variables_found.clear()
-            self._transformer.datasets_found.clear()
-            self._transformer.complexity_metrics = {
-                'nesting_level': 1,
-                'operation_count': 0,
-                'function_count': 0,
-                'conditional_count': 0
-            }
-            
-            self._logger.debug(f"Parsing concluído com sucesso")
             return parse_result
             
         except (ParseError, LexError) as e:
-            self._logger.error(f"Erro de sintaxe: {e}")
-            raise LOSParseError(
-                message=f"Erro de sintaxe na expressão: {text}",
-                expression=text,
-                original_exception=e
-            )
-        
+            raise LOSParseError(f"Erro de sintaxe: {e}", text, e)
         except Exception as e:
-            self._logger.error(f"Erro inesperado durante parsing: {e}")
-            raise LOSParseError(
-                message=f"Erro interno do parser: {str(e)}",
-                expression=text,
-                original_exception=e
-            )
+            raise LOSParseError(f"Erro interno: {str(e)}", text, e)
     
-    async def validate_syntax(self, text: str) -> bool:
-        """
-        Valida apenas sintaxe sem fazer transformação completa
-        
-        Args:
-            text: Texto para validar
-            
-        Returns:
-            True se sintaxe válida
-        """
+    def validate_syntax(self, text: str) -> bool:
         try:
-            cleaned_text = self._preprocess_text(text)
-            self._parser.parse(cleaned_text)
+            self._parser.parse(text.strip())
             return True
-        
         except (ParseError, LexError):
             return False
-        
-        except Exception as e:
-            self._logger.warning(f"Erro durante validação de sintaxe: {e}")
+        except Exception:
             return False
-    
-    def _preprocess_text(self, text: str) -> str:
-        """
-        Preprocessa texto antes do parsing
-        
-        Args:
-            text: Texto original
-            
-        Returns:
-            Texto limpo e normalizado
-        """
-        # Normalizar espaços
-        text = ' '.join(text.split())
-        
-        # Converter palavras-chave para maiúsculas
-        keywords = [
-            'minimizar', 'maximizar', 'se', 'entao', 'senao',
-            'para', 'cada', 'em', 'onde', 'e', 'ou', 'nao', 'soma', 'de'
-        ]
-        
-        # Tratamento especial para "SOMA DE"
-        text = re.sub(r'\bsoma\s+de\b', 'SOMA DE', text, flags=re.IGNORECASE)
-        
-        # Converter outras palavras-chave
-        for keyword in keywords:
-            pattern = r'\b' + keyword + r'\b'
-            text = re.sub(pattern, keyword.upper(), text, flags=re.IGNORECASE)
-        
-        return text
-    
+
     def get_grammar_content(self) -> str:
-        """Retorna conteúdo da gramática carregada"""
         try:
             with open(self._grammar_file, 'r', encoding='utf-8') as f:
                 return f.read()
-        except Exception as e:
-            self._logger.error(f"Erro lendo gramática: {e}")
+        except Exception:
             return ""
     
-    def reload_grammar(self, grammar_file: Optional[str] = None):
-        """Recarrega gramática do arquivo"""
-        if grammar_file:
-            self._grammar_file = grammar_file
-        
-        self._initialize_parser()
-        self._logger.info("Gramática recarregada com sucesso")
+    def get_version(self) -> str:
+        return self.__version__

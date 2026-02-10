@@ -15,7 +15,7 @@ from ..value_objects.expression_types import (
     DatasetReference,
     ComplexityMetrics
 )
-from ...shared.errors.exceptions import ValidationError, BusinessRuleError
+from ...shared.errors.exceptions import ValidationError
 
 
 @dataclass
@@ -23,7 +23,11 @@ class Expression:
     """
     Entidade central que representa uma expressão LOS analisada
     
-    Implementa invariantes de negócio e encapsula comportamentos essenciais
+    Implementa invariantes de negócio e encapsula comportamentos essenciais.
+    
+    NOTA F02: Validation is NOT performed in __post_init__.
+    Use Expression.create() factory for validated creation, or set fields
+    manually and call validate() explicitly.
     """
     
     # Identificação única
@@ -44,30 +48,39 @@ class Expression:
     
     # Métricas e metadados
     complexity: ComplexityMetrics = field(default_factory=ComplexityMetrics)
-    syntax_tree: Optional[Any] = None  # Árvore sintática do Lark
+    syntax_tree: Optional[Any] = None
     
     # Status de validação
     is_valid: bool = False
     validation_errors: List[str] = field(default_factory=list)
     
-    def __post_init__(self):
-        """Validações pós-inicialização"""
-        self._validate_invariants()
+    # F02: NO __post_init__ validation. Entity is a data holder.
+    # Validation is done explicitly via validate() or by UseCase logic.
     
-    def _validate_invariants(self):
-        """Valida invariantes de negócio da entidade"""
+    @classmethod
+    def create(cls, original_text: str, **kwargs) -> 'Expression':
+        """
+        Factory method that creates and validates an Expression.
+        Use this when you want immediate validation.
+        """
+        expr = cls(original_text=original_text, **kwargs)
+        expr.validate()
+        return expr
+    
+    def validate(self) -> bool:
+        """
+        Validates business invariants and sets is_valid + validation_errors.
+        Returns True if valid.
+        """
         errors = []
         
-        # Texto original deve estar presente
         if not self.original_text.strip():
             errors.append("Texto original da expressão não pode estar vazio")
         
-        # Para objetivos, deve ter pelo menos uma variável
         if (self.expression_type == ExpressionType.OBJECTIVE and 
             len(self.variables) == 0):
             errors.append("Objetivos devem conter pelo menos uma variável")
         
-        # Operações de comparação só em restrições
         comparison_ops = {
             OperationType.LESS, OperationType.GREATER,
             OperationType.LESS_EQUAL, OperationType.GREATER_EQUAL,
@@ -75,56 +88,44 @@ class Expression:
         }
         
         if (self.operation_type in comparison_ops and 
-            self.expression_type not in [ExpressionType.CONSTRAINT, ExpressionType.CONDITIONAL]):
+            self.expression_type not in [
+                ExpressionType.CONSTRAINT, 
+                ExpressionType.CONDITIONAL,
+                ExpressionType.MODEL
+            ]):
             errors.append(f"Operação {self.operation_type.value} só é válida em restrições e condicionais")
         
         if errors:
             self.validation_errors.extend(errors)
             self.is_valid = False
-            raise BusinessRuleError(
-                message=f"Violação de regras de negócio: {'; '.join(errors)}",
-                rule_name="expression_invariants",
-                violated_constraints=errors
-            )
         else:
             self.is_valid = True
+        
+        return self.is_valid
     
     def add_variable(self, variable: Variable):
-        """
-        Adiciona uma variável à expressão
-        
-        Args:
-            variable: Variável a ser adicionada
-        """
+        """Adiciona uma variável à expressão"""
         if not isinstance(variable, Variable):
             raise ValidationError(
                 message="Objeto deve ser instância de Variable",
                 field="variable"
             )
-        
         self.variables.add(variable)
         self._update_complexity()
     
     def add_dataset_reference(self, reference: DatasetReference):
-        """
-        Adiciona referência a dataset
-        
-        Args:
-            reference: Referência ao dataset
-        """
+        """Adiciona referência a dataset"""
         if not isinstance(reference, DatasetReference):
             raise ValidationError(
                 message="Objeto deve ser instância de DatasetReference", 
                 field="reference"
             )
-        
         self.dataset_references.add(reference)
     
     def _update_complexity(self):
         """Atualiza métricas de complexidade baseado nos componentes"""
         self.complexity = ComplexityMetrics(
             variable_count=len(self.variables),
-            # Outros campos serão atualizados durante o parsing
             nesting_level=self.complexity.nesting_level,
             operation_count=self.complexity.operation_count,
             function_count=self.complexity.function_count,
@@ -140,37 +141,15 @@ class Expression:
         return {ref.dataset_name for ref in self.dataset_references}
     
     def is_objective(self) -> bool:
-        """Verifica se é expressão de objetivo"""
         return self.expression_type == ExpressionType.OBJECTIVE
     
     def is_constraint(self) -> bool:
-        """Verifica se é restrição"""
         return self.expression_type == ExpressionType.CONSTRAINT
     
     def is_conditional(self) -> bool:
-        """Verifica se é expressão condicional"""
         return self.expression_type == ExpressionType.CONDITIONAL
     
-    def to_pulp_code(self) -> str:
-        """
-        Converte para código compatível com PuLP
-        
-        Returns:
-            Código Python/PuLP
-        """
-        if not self.is_valid:
-            raise BusinessRuleError(
-                message="Não é possível gerar código para expressão inválida",
-                rule_name="code_generation",
-                violated_constraints=self.validation_errors
-            )
-        
-        if self.is_objective():
-            return f"prob += {self.python_code}"
-        elif self.is_constraint():
-            return f"prob += {self.python_code}"
-        else:
-            return self.python_code
+    # F11: Removed dead to_pulp_code(). Translation is handled by Translator.
     
     def to_dict(self) -> Dict[str, Any]:
         """Converte entidade para dicionário para serialização"""
@@ -197,11 +176,9 @@ class Expression:
         }
     
     def __str__(self) -> str:
-        """Representação string da expressão"""
         return f"Expression({self.expression_type.value}: {self.original_text[:50]}...)"
     
     def __repr__(self) -> str:
-        """Representação detalhada para debug"""
         return (
             f"Expression(id={self.id}, type={self.expression_type.value}, "
             f"variables={len(self.variables)}, valid={self.is_valid})"

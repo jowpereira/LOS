@@ -17,7 +17,7 @@ class IExpressionRepository(ABC):
     """
     
     @abstractmethod
-    async def save(self, expression: Expression) -> Expression:
+    def save(self, expression: Expression) -> Expression:
         """
         Salva uma expressão
         
@@ -30,7 +30,7 @@ class IExpressionRepository(ABC):
         pass
     
     @abstractmethod
-    async def find_by_id(self, expression_id: UUID) -> Optional[Expression]:
+    def find_by_id(self, expression_id: UUID) -> Optional[Expression]:
         """
         Busca expressão por ID
         
@@ -43,7 +43,7 @@ class IExpressionRepository(ABC):
         pass
     
     @abstractmethod
-    async def find_by_type(self, expression_type: str) -> List[Expression]:
+    def find_by_type(self, expression_type: str) -> List[Expression]:
         """
         Busca expressões por tipo
         
@@ -56,7 +56,7 @@ class IExpressionRepository(ABC):
         pass
     
     @abstractmethod
-    async def find_all(self) -> List[Expression]:
+    def find_all(self) -> List[Expression]:
         """
         Retorna todas as expressões
         
@@ -66,7 +66,7 @@ class IExpressionRepository(ABC):
         pass
     
     @abstractmethod
-    async def delete(self, expression_id: UUID) -> bool:
+    def delete(self, expression_id: UUID) -> bool:
         """
         Remove uma expressão
         
@@ -79,7 +79,7 @@ class IExpressionRepository(ABC):
         pass
     
     @abstractmethod
-    async def count(self) -> int:
+    def count(self) -> int:
         """
         Conta total de expressões
         
@@ -96,7 +96,7 @@ class IGrammarRepository(ABC):
     """
     
     @abstractmethod
-    async def load_grammar(self, grammar_name: str = "los_grammar") -> str:
+    def load_grammar(self, grammar_name: str = "los_grammar") -> str:
         """
         Carrega gramática por nome
         
@@ -109,7 +109,7 @@ class IGrammarRepository(ABC):
         pass
     
     @abstractmethod
-    async def save_grammar(self, grammar_name: str, content: str) -> bool:
+    def save_grammar(self, grammar_name: str, content: str) -> bool:
         """
         Salva uma gramática
         
@@ -123,7 +123,7 @@ class IGrammarRepository(ABC):
         pass
     
     @abstractmethod
-    async def list_grammars(self) -> List[str]:
+    def list_grammars(self) -> List[str]:
         """
         Lista gramáticas disponíveis
         
@@ -140,7 +140,7 @@ class IDatasetRepository(ABC):
     """
     
     @abstractmethod
-    async def load_dataset(self, dataset_name: str) -> Dict[str, Any]:
+    def load_dataset(self, dataset_name: str) -> Dict[str, Any]:
         """
         Carrega dataset por nome
         
@@ -153,7 +153,7 @@ class IDatasetRepository(ABC):
         pass
     
     @abstractmethod
-    async def save_dataset(self, dataset_name: str, data: Dict[str, Any]) -> bool:
+    def save_dataset(self, dataset_name: str, data: Dict[str, Any]) -> bool:
         """
         Salva um dataset
         
@@ -167,7 +167,7 @@ class IDatasetRepository(ABC):
         pass
     
     @abstractmethod
-    async def list_datasets(self) -> List[str]:
+    def list_datasets(self) -> List[str]:
         """
         Lista datasets disponíveis
         
@@ -177,7 +177,7 @@ class IDatasetRepository(ABC):
         pass
     
     @abstractmethod
-    async def get_dataset_schema(self, dataset_name: str) -> Dict[str, str]:
+    def get_dataset_schema(self, dataset_name: str) -> Dict[str, str]:
         """
         Retorna schema de um dataset
         

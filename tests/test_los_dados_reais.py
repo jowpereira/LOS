@@ -74,17 +74,14 @@ class TestLOSComDadosReais:
         """Testa criação de Expression usando nomes reais dos dados"""
         produtos_df = bases_dados_reais['produtos']
         
-        # Criar expressão com variável inicial para passar na validação
-        var_inicial = Variable(name="x", indices=("dummy",))
+        # F02: Create expression, then populate, then validate
         expression = Expression(
             original_text="MINIMIZAR: soma de produtos.Custo_Producao * x[produto] para cada produto",
             expression_type=ExpressionType.OBJECTIVE,
-            operation_type=OperationType.MINIMIZE,
-            variables={var_inicial}
+            operation_type=OperationType.MINIMIZE
         )
         
-        # Limpar e adicionar variáveis baseadas nos produtos reais
-        expression.variables.clear()
+        # Adicionar variáveis baseadas nos produtos reais
         for produto in produtos_df['Produto']:
             var = Variable(name="x", indices=(produto,))
             expression.add_variable(var)
@@ -95,6 +92,9 @@ class TestLOSComDadosReais:
             column_name="Custo_Producao"
         )
         expression.add_dataset_reference(dataset_ref)
+        
+        # Validate after populating
+        expression.validate()
         
         # Validações
         assert expression.is_valid
@@ -153,8 +153,7 @@ class TestLOSComDadosReais:
         produtos_df = bases_dados_reais['produtos']
         ordens_df = bases_dados_reais['ordens']
         
-        # Criar expressão com variável inicial
-        var_inicial = Variable(name="x", indices=("dummy",))
+        # F02: Create, populate, validate
         expression = Expression(
             original_text=(
                 "MINIMIZAR: soma de produtos.Custo_Producao * x[produto, planta] "
@@ -162,12 +161,8 @@ class TestLOSComDadosReais:
                 "para cada produto, planta, cliente"
             ),
             expression_type=ExpressionType.OBJECTIVE,
-            operation_type=OperationType.MINIMIZE,
-            variables={var_inicial}
+            operation_type=OperationType.MINIMIZE
         )
-        
-        # Limpar e adicionar variáveis reais
-        expression.variables.clear()
         
         # Adicionar variáveis de produção
         for produto in produtos_df['Produto'].unique():
@@ -188,9 +183,11 @@ class TestLOSComDadosReais:
         for ref in refs:
             expression.add_dataset_reference(ref)
         
+        expression.validate()
+        
         # Validações
         assert expression.is_valid
-        assert len(expression.variables) > 10  # Deve ter muitas variáveis
+        assert len(expression.variables) > 10
         assert len(expression.dataset_references) == 2
         assert expression.complexity.complexity_level in ["MÉDIA", "ALTA", "MUITO_ALTA"]
     
@@ -198,7 +195,7 @@ class TestLOSComDadosReais:
         """Testa criação de restrição de capacidade usando dados reais"""
         estoque_df = bases_dados_reais['estoque']
         
-        # Criar restrição: produção <= capacidade disponível
+        # F02: No variables in init, add after
         expression = Expression(
             original_text=(
                 "soma de x[produto, planta] <= estoque.Quantidade_Disponivel "
@@ -208,16 +205,15 @@ class TestLOSComDadosReais:
             operation_type=OperationType.LESS_EQUAL
         )
         
-        # Adicionar variáveis baseadas no estoque real
         for _, row in estoque_df.iterrows():
             var = Variable(name="x", indices=(row['Produto'], row['Planta']))
             expression.add_variable(var)
         
-        # Adicionar referência ao dataset de estoque
         dataset_ref = DatasetReference("estoque", "Quantidade_Disponivel")
         expression.add_dataset_reference(dataset_ref)
         
-        # Validações
+        expression.validate()
+        
         assert expression.is_valid
         assert expression.is_constraint()
         assert expression.operation_type == OperationType.LESS_EQUAL
@@ -225,37 +221,28 @@ class TestLOSComDadosReais:
     @pytest.mark.integration
     def test_fluxo_completo_com_dados_reais(self, bases_dados_reais):
         """Teste de integração completo usando todos os dados reais"""
-        # Este teste simula um problema de otimização real
         
-        # 1. Objetivo: minimizar custos totais (com variável inicial)
-        var_inicial = Variable(name="x", indices=("dummy",))
+        # F02: Create, populate, validate
         objetivo = Expression(
             original_text="MINIMIZAR: custos totais de produção e atendimento",
             expression_type=ExpressionType.OBJECTIVE,
-            operation_type=OperationType.MINIMIZE,
-            variables={var_inicial}
+            operation_type=OperationType.MINIMIZE
         )
         
-        # Limpar e adicionar variáveis reais
-        objetivo.variables.clear()
-        
-        # 2. Adicionar variáveis de decisão baseadas nos dados
+        # Adicionar variáveis de decisão baseadas nos dados
         produtos = bases_dados_reais['produtos']['Produto'].unique()
         plantas = bases_dados_reais['ordens']['Planta'].unique()
         clientes = bases_dados_reais['clientes']['Codigo_Cliente'].unique()
         
-        # Variáveis de produção x[produto, planta]
         for produto in produtos:
             for planta in plantas:
                 var = Variable(name="x", indices=(produto, planta))
                 objetivo.add_variable(var)
         
-        # Variáveis de atendimento y[cliente]
         for cliente in clientes:
             var = Variable(name="y", indices=(cliente,))
             objetivo.add_variable(var)
         
-        # 3. Adicionar referências aos datasets
         referencias = [
             DatasetReference("produtos", "Custo_Producao"),
             DatasetReference("custos", "Valor_Custo"),
@@ -264,43 +251,44 @@ class TestLOSComDadosReais:
         for ref in referencias:
             objetivo.add_dataset_reference(ref)
         
-        # 4. Validar que o modelo está bem formado
-        assert objetivo.is_valid
-        assert len(objetivo.variables) >= 20  # Muitas variáveis de decisão
-        assert len(objetivo.dataset_references) == 3
-        assert objetivo.complexity.total_complexity > 20  # Problema complexo
+        objetivo.validate()
         
-        # 5. Testar serialização
+        assert objetivo.is_valid
+        assert len(objetivo.variables) >= 20
+        assert len(objetivo.dataset_references) == 3
+        assert objetivo.complexity.total_complexity > 20
+        
+        # Serialização
         modelo_dict = objetivo.to_dict()
-        assert 'id' in modelo_dict
+        assert 'original_text' in modelo_dict
         assert 'variables' in modelo_dict
         assert 'dataset_references' in modelo_dict
         assert modelo_dict['is_valid'] == True
     
     def test_validacao_business_rules_com_dados_reais(self, bases_dados_reais):
-        """Testa regras de negócio usando cenários dos dados reais"""
-        from los.shared.errors.exceptions import BusinessRuleError
+        """F02: Testa regras de negócio via validate() — no exceptions from constructor"""
         
-        # Cenário 1: Objetivo deve ter variáveis
-        with pytest.raises(BusinessRuleError):  # BusinessRuleError esperado
-            Expression(
-                original_text="MINIMIZAR: custo fixo",
-                expression_type=ExpressionType.OBJECTIVE,
-                operation_type=OperationType.MINIMIZE
-                # Sem variáveis - deve falhar
-            )
+        # Cenário 1: Objetivo sem variáveis → invalid via validate()
+        expr = Expression(
+            original_text="MINIMIZAR: custo fixo",
+            expression_type=ExpressionType.OBJECTIVE,
+            operation_type=OperationType.MINIMIZE
+        )
+        expr.validate()
+        assert expr.is_valid is False
+        assert any("variável" in e for e in expr.validation_errors)
         
-        # Cenário 2: Restrição com operador matemático inválido deve passar na criação
-        # mas podemos testar outras validações
-        
-        # Teste: operação de comparação em expressão matemática deve falhar
-        with pytest.raises(BusinessRuleError):
-            Expression(
-                original_text="x <= y",  
-                expression_type=ExpressionType.MATHEMATICAL,  # Tipo matemático
-                operation_type=OperationType.LESS_EQUAL,  # Operador de comparação - inválido
-                variables={Variable(name="x"), Variable(name="y")}
-            )
+        # Cenário 2: Comparação em expressão matemática → invalid
+        expr2 = Expression(
+            original_text="x <= y",
+            expression_type=ExpressionType.MATHEMATICAL,
+            operation_type=OperationType.LESS_EQUAL
+        )
+        expr2.add_variable(Variable(name="x"))
+        expr2.add_variable(Variable(name="y"))
+        expr2.validate()
+        assert expr2.is_valid is False
+        assert any("restrições" in e for e in expr2.validation_errors)
     
     def test_metricas_complexidade_dados_reais(self, bases_dados_reais):
         """Testa cálculo de métricas de complexidade com dados reais"""
@@ -327,24 +315,21 @@ class TestLOSComDadosReais:
         ]
     
     def test_to_pulp_code_com_dados_reais(self, bases_dados_reais):
-        """Testa conversão para código PuLP usando dados reais"""
-        # Criar objetivo simples com variável inicial
-        var_inicial = Variable(name="x", indices=("dummy",))
+        """F11: to_pulp_code() removed — test translation via PuLPTranslator"""
+        from los.infrastructure.translators.pulp_translator import PuLPTranslator
+        
         objetivo = Expression(
             original_text="MINIMIZAR: soma dos custos",
-            python_code="sum(custos[i] * x[i] for i in produtos)",
             expression_type=ExpressionType.OBJECTIVE,
-            operation_type=OperationType.MINIMIZE,
-            variables={var_inicial}
+            operation_type=OperationType.MINIMIZE
         )
+        objetivo.add_variable(Variable(name="x", indices=("dummy",)))
+        objetivo.syntax_tree = {'type': 'objective', 'sense': 'minimize', 'expression': {'type': 'var_ref', 'name': 'x'}}
+        objetivo.validate()
         
-        # Marcar como válido
-        objetivo.is_valid = True
-        objetivo.validation_errors = []
+        translator = PuLPTranslator()
+        code = translator.translate_expression(objetivo)
         
-        # Gerar código PuLP
-        pulp_code = objetivo.to_pulp_code()
-        
-        # Verificar que o código foi gerado corretamente
-        assert pulp_code.startswith("prob +=")
-        assert "sum(custos[i] * x[i] for i in produtos)" in pulp_code
+        assert "import pulp" in code
+        assert "prob =" in code
+        assert "prob.solve()" in code

@@ -16,6 +16,7 @@ class ExpressionType(Enum):
     CONDITIONAL = "conditional"
     MATHEMATICAL = "mathematical"
     AGGREGATION = "aggregation"
+    MODEL = "model"
 
 
 class OperationType(Enum):

@@ -4,7 +4,8 @@ Serviço de aplicação principal para operações com expressões LOS
 """
 
 import time
-from typing import List, Optional
+import re
+from typing import List, Optional, Dict, Any
 from uuid import UUID
 
 from ..dto.expression_dto import (
@@ -46,7 +47,9 @@ class ExpressionService:
     Serviço de aplicação para operações com expressões LOS
     
     Coordena use cases, adaptadores e repositórios para fornecer
-    API unificada para as camadas superiores
+    API unificada para as camadas superiores.
+    
+    Nota: Implementação síncrona (v3)
     """
     
     def __init__(
@@ -70,20 +73,15 @@ class ExpressionService:
         # Use cases
         self._parse_expression_uc = ParseExpressionUseCase(
             expression_repository, 
-            grammar_repository
+            grammar_repository,
+            parser_adapter # Injetando parser
         )
         
         self._logger = get_logger('services.expression')
     
-    async def parse_expression(self, request: ExpressionRequestDTO) -> ExpressionResponseDTO:
+    def parse_expression(self, request: ExpressionRequestDTO) -> ExpressionResponseDTO:
         """
         Analisa uma expressão LOS
-        
-        Args:
-            request: Dados da requisição
-            
-        Returns:
-            Resultado da análise
         """
         try:
             self._logger.info(f"Iniciando análise de expressão: {request.text[:50]}...")
@@ -91,26 +89,40 @@ class ExpressionService:
             # Verificar cache se disponível
             cache_key = f"expression:{hash(request.text)}"
             if self._cache_adapter:
-                cached_result = await self._cache_adapter.get(cache_key)
+                cached_result = self._cache_adapter.get(cache_key)
                 if cached_result:
                     self._logger.info("Resultado encontrado no cache")
                     return cached_result
             
-            # Executar use case
+            # Executar use case (Síncrono)
             uc_request = ParseExpressionRequest(
                 text=request.text,
                 validate=request.validate,
                 save_result=request.save_result
             )
             
-            uc_response = await self._parse_expression_uc.execute(uc_request)
+            uc_response = self._parse_expression_uc.execute(uc_request)
+            
+            # Fix R12/A08: Integrate Translator into Service
+            # Ensure python_code is generated if parsing was successful
+            if uc_response.success and uc_response.expression.is_valid:
+                 try:
+                     self._translator_adapter.translate_expression(uc_response.expression)
+                 except Exception as e:
+                     self._logger.error(f"Translation failed: {e}")
+                     # We append warning/error but don't fail the parse if structure is valid?
+                     # Ideally we want complete success.
+                     uc_response.success = False
+                     uc_response.errors.append(f"Translation Error: {str(e)}")
+                     uc_response.expression.validation_errors.append(f"Translation Error: {str(e)}")
+            
             
             # Converter para DTO
             response = self._convert_to_expression_dto(uc_response)
             
             # Armazenar no cache se disponível e bem-sucedido
             if self._cache_adapter and response.success:
-                await self._cache_adapter.set(cache_key, response, ttl=3600)  # 1 hora
+                self._cache_adapter.set(cache_key, response, ttl=3600)
             
             self._logger.info(f"Análise concluída - Sucesso: {response.success}")
             return response
@@ -134,15 +146,9 @@ class ExpressionService:
                 warnings=[]
             )
     
-    async def process_batch(self, request: BatchProcessRequestDTO) -> BatchProcessResponseDTO:
+    def process_batch(self, request: BatchProcessRequestDTO) -> BatchProcessResponseDTO:
         """
         Processa múltiplas expressões em lote
-        
-        Args:
-            request: Dados do lote
-            
-        Returns:
-            Resultado do processamento em lote
         """
         start_time = time.time()
         results = []
@@ -163,7 +169,7 @@ class ExpressionService:
                     )
                     
                     # Processar expressão
-                    result = await self.parse_expression(expr_request)
+                    result = self.parse_expression(expr_request)
                     results.append(result)
                     
                     if result.success:
@@ -211,15 +217,9 @@ class ExpressionService:
                 processing_time=time.time() - start_time
             )
     
-    async def process_file(self, request: FileProcessRequestDTO) -> FileProcessResponseDTO:
+    def process_file(self, request: FileProcessRequestDTO) -> FileProcessResponseDTO:
         """
-        Processa arquivo .los
-        
-        Args:
-            request: Dados da requisição de arquivo
-            
-        Returns:
-            Resultado do processamento do arquivo
+        Processa arquivo .los/.txt/.csv
         """
         if not self._file_adapter:
             raise BusinessRuleError(
@@ -230,16 +230,18 @@ class ExpressionService:
         try:
             self._logger.info(f"Processando arquivo: {request.file_path}")
             
-            # Verificar se arquivo existe
-            if not await self._file_adapter.file_exists(request.file_path):
+            # Verificar se arquivo existe (Sync)
+            if not self._file_adapter.file_exists(request.file_path):
                 raise FileError(
                     message=f"Arquivo não encontrado: {request.file_path}",
                     file_path=request.file_path,
                     operation="read"
                 )
             
-            # Ler conteúdo do arquivo
-            content = await self._file_adapter.read_file(request.file_path, request.encoding)
+            # Ler conteúdo do arquivo (Sync)
+            content = self._file_adapter.read_file(request.file_path, request.encoding)
+            
+            # TODO: Se for CSV, processar diferente. Por enquanto assume texto/los
             
             # Extrair expressões (remover comentários e linhas vazias)
             expressions = self._extract_expressions_from_content(content)
@@ -252,7 +254,7 @@ class ExpressionService:
                 stop_on_error=False
             )
             
-            batch_result = await self.process_batch(batch_request)
+            batch_result = self.process_batch(batch_request)
             
             return FileProcessResponseDTO(
                 file_path=request.file_path,
@@ -274,18 +276,15 @@ class ExpressionService:
                 file_errors=[str(e)]
             )
     
-    async def get_statistics(self) -> StatisticsResponseDTO:
+    def get_statistics(self) -> StatisticsResponseDTO:
         """
         Retorna estatísticas do sistema
-        
-        Returns:
-            Estatísticas compiladas
         """
         try:
             self._logger.info("Compilando estatísticas do sistema")
             
-            # Buscar todas as expressões
-            all_expressions = await self._expression_repo.find_all()
+            # Buscar todas as expressões (Sync)
+            all_expressions = self._expression_repo.find_all()
             
             # Calcular estatísticas
             total = len(all_expressions)
@@ -387,23 +386,31 @@ class ExpressionService:
     
     def _extract_expressions_from_content(self, content: str) -> List[str]:
         """Extrai expressões válidas de conteúdo de arquivo"""
-        expressions = []
+        # F04: Proper keyword detection — strip comments first, then check for
+        # LOS v3 model keywords using word boundaries to avoid substring matches.
         
+        # Strip comment lines before checking keywords
+        code_lines = []
         for line in content.split('\n'):
-            line = line.strip()
-            
-            # Pular comentários, linhas vazias e documentação
-            if (not line or line.startswith('#') or line.startswith('```') or
-                line.startswith('*') or line.startswith('**') or 
-                line.startswith('-') or line.startswith('|') or
-                line.startswith('❌') or line.startswith('✅') or
-                line.startswith('---') or line.startswith('=')):
+            stripped = line.strip()
+            if stripped.startswith('#') or stripped.startswith('//'):
                 continue
-            
-            # Pular numeração de listas
-            if any(line.startswith(f"{i}.") for i in range(1, 10)):
-                continue
-            
-            expressions.append(line)
+            # Remove inline comments
+            if '#' in stripped:
+                stripped = stripped[:stripped.index('#')].strip()
+            if stripped:
+                code_lines.append(stripped)
         
+        code_content = '\n'.join(code_lines)
+        
+        # If content contains LOS v3 model keywords, treat entire file as one model
+        model_keywords = r'\b(st:|var\s|set\s|param\s|min:|max:|import\s)'
+        if re.search(model_keywords, code_content):
+            return [content]
+        
+        # Otherwise, split into individual expression lines
+        expressions = []
+        for line in code_lines:
+            if line and not line.startswith('```') and not line.startswith('---'):
+                expressions.append(line)
         return expressions

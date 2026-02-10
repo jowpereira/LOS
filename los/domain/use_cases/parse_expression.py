@@ -3,12 +3,15 @@
 Caso de uso para análise e parsing de expressões LOS
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 
 from ..entities.expression import Expression
-from ..value_objects.expression_types import ExpressionType, OperationType
+from ..value_objects.expression_types import (
+    ExpressionType, OperationType, Variable, DatasetReference, ComplexityMetrics
+)
 from ..repositories.interfaces import IExpressionRepository, IGrammarRepository
+from ...application.interfaces.adapters import IParserAdapter
 from ...shared.errors.exceptions import ParseError, ValidationError, BusinessRuleError
 from ...shared.logging.logger import get_logger
 
@@ -44,15 +47,17 @@ class ParseExpressionUseCase:
     def __init__(
         self,
         expression_repository: IExpressionRepository,
-        grammar_repository: IGrammarRepository
+        grammar_repository: IGrammarRepository,
+        parser_adapter: IParserAdapter
     ):
         self._expression_repo = expression_repository
         self._grammar_repo = grammar_repository
+        self._parser = parser_adapter
         self._logger = get_logger('use_cases.parse_expression')
     
-    async def execute(self, request: ParseExpressionRequest) -> ParseExpressionResponse:
+    def execute(self, request: ParseExpressionRequest) -> ParseExpressionResponse:
         """
-        Executa o parsing de uma expressão
+        Executa o parsing de uma expressão (Síncrono)
         
         Args:
             request: Dados da requisição
@@ -67,34 +72,49 @@ class ParseExpressionUseCase:
             self._logger.info(f"Iniciando parsing de expressão: {request.text[:50]}...")
             
             # Validações iniciais
-            if not request.text.strip():
+            if not request.text or not request.text.strip():
                 raise ValidationError(
                     message="Texto da expressão não pode estar vazio",
                     field="text"
                 )
             
-            # Criar expressão base
+            # 1. Parsing Real
+            # O parser agora é a fonte da verdade sobre a estrutura
+            try:
+                # Agora síncrono
+                parse_result = self._parser.parse(request.text)
+            except Exception as e:
+                # Se falhar no parsing, não podemos prosseguir
+                self._logger.error(f"Erro no parser: {e}")
+                # Criar expressão inválida para retorno consistente
+                expr_error = Expression(
+                    original_text=request.text,
+                    is_valid=False,
+                    validation_errors=[str(e)]
+                )
+                return ParseExpressionResponse(
+                    expression=expr_error,
+                    success=False,
+                    errors=[str(e)],
+                    warnings=warnings
+                )
+
+            # 2. Criar Entidade com dados do parser
             expression = Expression(original_text=request.text.strip())
             
-            # Determinar tipo de expressão (regra de negócio)
-            expression_type = self._detect_expression_type(request.text)
-            expression.expression_type = expression_type
+            # Mapear resultado do parser para a entidade
+            self._map_parser_result_to_entity(expression, parse_result)
             
-            # Determinar operação (regra de negócio)
-            operation_type = self._detect_operation_type(request.text, expression_type)
-            expression.operation_type = operation_type
-            
-            # Aplicar regras de validação se solicitado
+            # 3. Validação (F02: Single source of truth via Expression.validate())
             if request.validate:
-                validation_errors = self._validate_expression_rules(expression)
-                if validation_errors:
-                    errors.extend(validation_errors)
-                    expression.validation_errors.extend(validation_errors)
-                    expression.is_valid = False
-            
-            # Salvar se solicitado e válido
+                expression.validate()
+                if not expression.is_valid:
+                    errors.extend(expression.validation_errors)
+
+            # 4. Persistência
             if request.save_result and expression.is_valid:
-                expression = await self._expression_repo.save(expression)
+                result = self._expression_repo.save(expression)
+                expression.id = result.id
                 self._logger.info(f"Expressão salva com ID: {expression.id}")
             
             success = len(errors) == 0
@@ -115,132 +135,69 @@ class ParseExpressionUseCase:
             self._logger.error(f"Erro durante parsing: {e}")
             errors.append(str(e))
             
-            # Retornar expressão com erro
-            expression = Expression(
-                original_text=request.text,
-                is_valid=False,
-                validation_errors=[str(e)]
-            )
-            
             return ParseExpressionResponse(
-                expression=expression,
+                expression=Expression(
+                    original_text=request.text,
+                    is_valid=False,
+                    validation_errors=[str(e)]
+                ),
                 success=False,
                 errors=errors,
                 warnings=warnings
             )
         
         except Exception as e:
-            self._logger.error(f"Erro inesperado durante parsing: {e}")
+            self._logger.error(f"Erro inesperado durante parsing UseCase: {e}")
             errors.append(f"Erro interno: {str(e)}")
             
-            expression = Expression(
-                original_text=request.text,
-                is_valid=False,
-                validation_errors=[f"Erro interno: {str(e)}"]
-            )
-            
             return ParseExpressionResponse(
-                expression=expression,
+                expression=Expression(
+                    original_text=request.text,
+                    is_valid=False,
+                    validation_errors=[f"Erro interno: {str(e)}"]
+                ),
                 success=False,
                 errors=errors,
                 warnings=warnings
             )
-    
-    def _detect_expression_type(self, text: str) -> ExpressionType:
-        """
-        Detecta tipo de expressão baseado no texto
-        Implementa regras de negócio para classificação
-        """
-        text_upper = text.upper().strip()
+
+    def _map_parser_result_to_entity(self, expression: Expression, parse_result: Dict[str, Any]):
+        """Popula a entidade Expression com dados do parser"""
         
-        # Objetivos
-        if text_upper.startswith('MINIMIZAR:') or text_upper.startswith('MAXIMIZAR:'):
-            return ExpressionType.OBJECTIVE
+        parsed_data = parse_result.get('parsed_result', {})
+        expression.syntax_tree = parsed_data
         
-        # Condicionais  
-        if 'SE ' in text_upper and ' ENTAO ' in text_upper:
-            return ExpressionType.CONDITIONAL
+        # Determinar tipo
+        node_type = parsed_data.get('type')
         
-        # Agregações
-        if 'SOMA DE' in text_upper or 'PARA CADA' in text_upper:
-            return ExpressionType.AGGREGATION
+        if node_type == 'model':
+            expression.expression_type = ExpressionType.MODEL
+            
+        elif node_type == 'objective':
+            expression.expression_type = ExpressionType.OBJECTIVE
+            sense = parsed_data.get('sense', 'minimize')
+            expression.operation_type = OperationType.MINIMIZE if sense == 'minimize' else OperationType.MAXIMIZE
+            
+        elif node_type == 'constraint' or node_type == 'constraint_block':
+            expression.expression_type = ExpressionType.CONSTRAINT
+            
+        # Variáveis
+        variables = parse_result.get('variables', [])
+        for var in variables:
+            if isinstance(var, Variable):
+                expression.add_variable(var)
         
-        # Restrições (tem operadores relacionais)
-        comparison_operators = ['<=', '>=', '==', '!=', '<', '>', '=']
-        if any(op in text for op in comparison_operators):
-            return ExpressionType.CONSTRAINT
+        # Datasets
+        datasets = parse_result.get('datasets', [])
+        for ref in datasets:
+            if isinstance(ref, DatasetReference):
+                expression.add_dataset_reference(ref)
+            
+        # Complexidade
+        comp_data = parse_result.get('complexity', None)
+        if comp_data and isinstance(comp_data, ComplexityMetrics):
+             expression.complexity = comp_data
+        elif comp_data and isinstance(comp_data, dict):
+             expression.complexity = ComplexityMetrics(**comp_data)
         
-        # Default: matemática
-        return ExpressionType.MATHEMATICAL
-    
-    def _detect_operation_type(self, text: str, expr_type: ExpressionType) -> OperationType:
-        """
-        Detecta tipo de operação baseado no texto e tipo de expressão
-        """
-        text_upper = text.upper()
-        
-        if expr_type == ExpressionType.OBJECTIVE:
-            if text_upper.startswith('MINIMIZAR:'):
-                return OperationType.MINIMIZE
-            elif text_upper.startswith('MAXIMIZAR:'):
-                return OperationType.MAXIMIZE
-        
-        elif expr_type == ExpressionType.CONSTRAINT:
-            if '<=' in text:
-                return OperationType.LESS_EQUAL
-            elif '>=' in text:
-                return OperationType.GREATER_EQUAL
-            elif '==' in text:
-                return OperationType.EQUAL
-            elif '!=' in text:
-                return OperationType.NOT_EQUAL
-            elif '<' in text:
-                return OperationType.LESS
-            elif '>' in text:
-                return OperationType.GREATER
-            elif '=' in text:
-                return OperationType.EQUAL
-        
-        elif expr_type == ExpressionType.CONDITIONAL:
-            return OperationType.IF_THEN_ELSE
-        
-        # Default para matemáticas
-        if '+' in text:
-            return OperationType.ADDITION
-        elif '-' in text:
-            return OperationType.SUBTRACTION
-        elif '*' in text:
-            return OperationType.MULTIPLICATION
-        elif '/' in text:
-            return OperationType.DIVISION
-        
-        return OperationType.ADDITION  # Default
-    
-    def _validate_expression_rules(self, expression: Expression) -> list:
-        """
-        Valida regras de negócio específicas da expressão
-        
-        Returns:
-            Lista de erros encontrados
-        """
-        errors = []
-        
-        # Regra: Objetivos devem ter palavras-chave corretas
-        if expression.expression_type == ExpressionType.OBJECTIVE:
-            text_upper = expression.original_text.upper()
-            if not (text_upper.startswith('MINIMIZAR:') or text_upper.startswith('MAXIMIZAR:')):
-                errors.append("Objetivos devem começar com 'MINIMIZAR:' ou 'MAXIMIZAR:'")
-        
-        # Regra: Restrições devem ter operadores relacionais
-        elif expression.expression_type == ExpressionType.CONSTRAINT:
-            comparison_ops = ['<=', '>=', '==', '!=', '<', '>', '=']
-            if not any(op in expression.original_text for op in comparison_ops):
-                errors.append("Restrições devem conter operadores relacionais")
-        
-        # Regra: Condicionais devem ter estrutura SE...ENTAO
-        elif expression.expression_type == ExpressionType.CONDITIONAL:
-            text_upper = expression.original_text.upper()
-            if not ('SE ' in text_upper and ' ENTAO ' in text_upper):
-                errors.append("Condicionais devem ter estrutura 'SE ... ENTAO ...'")
-        
-        return errors
+        # F02: No validation here — UseCase calls expression.validate() explicitly

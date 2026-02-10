@@ -3,7 +3,7 @@
 Objetos para transferência de dados entre camadas
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 from uuid import UUID
@@ -82,7 +82,7 @@ class ValidationRequestDTO:
     """DTO para requisições de validação"""
     expression_id: Optional[str] = None
     expression_text: Optional[str] = None
-    validation_rules: List[str] = None
+    validation_rules: List[str] = field(default_factory=list)
 
 
 @dataclass

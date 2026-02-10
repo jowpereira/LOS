@@ -1,84 +1,165 @@
-// 🚀 LOS GRAMMAR - Linguagem de Otimização Simples Avançada
-// Gramática Lark para o parser LOS
-// Suporta expressões matemáticas complexas com precedência correta
-?start: expressao
+// 🚀 LOS GRAMMAR v3.0 - Linguagem de Otimização Simples
+// Gramática Lark para o parser LOS v3 (Bilíngue PT/EN)
+// Suporta a nova sintaxe simplificada e declarativa
 
-?expressao: objetivo | expressao_condicional | expressao_comparacao | expressao_matematica
+?start: statement+
 
-objetivo: "MINIMIZAR" ":" expressao_matematica -> objetivo_minimizar
-        | "MAXIMIZAR" ":" expressao_matematica -> objetivo_maximizar
+?statement: import_stmt
+          | set_decl
+          | param_decl
+          | var_decl
+          | objective
+          | constraint_block
 
-expressao_condicional: "SE" expressao_logica "ENTAO" expressao_matematica "SENAO" expressao_matematica
+// --- IMPORTS ---
+import_stmt: "import" STRING -> import_model
+           | "importar" STRING -> import_model
 
-?expressao_logica: expressao_logica_ou
+// --- SETS (Conjuntos) ---
+set_decl: "set" IDENTIFICADOR ("=" set_expr)? -> set_declaration
+        | "conj" IDENTIFICADOR ("=" set_expr)? -> set_declaration
 
-?expressao_logica_ou: expressao_logica_ou "OU" expressao_logica_e -> operacao_ou
-                   | expressao_logica_e
+?set_expr: "{" set_elements "}" -> set_literal
+         | expression ".." expression -> set_range
+         | expression ".." expression "step" expression -> set_range_step
+         | "{" expression "in" IDENTIFICADOR ("where" logic_expr)? "}" -> set_filter
+         | IDENTIFICADOR -> set_ref
+         | IDENTIFICADOR set_op IDENTIFICADOR -> set_operation
 
-?expressao_logica_e: expressao_logica_e "E" expressao_logica_nao -> operacao_e
-                   | expressao_logica_nao
+set_elements: (expression ("," expression)*)?
+set_op: SET_UNION | SET_INTER | SET_DIFF | SET_CROSS
 
-?expressao_logica_nao: "NAO" "(" expressao_comparacao ")" -> operacao_nao
-                     | "NAO" expressao_comparacao -> operacao_nao
-                     | expressao_comparacao
+// --- PARAMETERS (Parâmetros) ---
+param_decl: "param" IDENTIFICADOR ("[" indices "]")? ("=" expression)? -> param_declaration
 
-?expressao_comparacao: expressao_matematica operador_relacional expressao_matematica
+// --- VARIABLES (Variáveis) ---
+var_decl: "var" IDENTIFICADOR ("[" indices "]")? (":" var_type)? (var_bounds)? -> var_declaration
 
-?expressao_matematica: soma
+var_type: INT_TYPE | BIN_TYPE | CONT_TYPE
 
-?soma: soma op_aditivo produto -> operacao_aditiva
-     | produto
+var_bounds: GE expression (LE expression)? -> bounds_ge_le
+          | LE expression (GE expression)? -> bounds_le_ge
+          | EQ expression -> bounds_eq
+          | "in" set_expr -> bounds_in_set
 
-?produto: produto op_multiplicativo fator -> operacao_multiplicativa  
-        | fator
+// --- OBJECTIVE (Objetivo) ---
+objective: obj_sense ":" expression -> objective_decl
 
-op_aditivo: "+" | "-"
-op_multiplicativo: "*" | "/"
+obj_sense: MIN | MAX
 
-?fator: numero
-      | string
-      | IDENTIFICADOR
-      | IDENTIFICADOR "." dataset_coluna -> referencia_dataset
-      | IDENTIFICADOR "[" indices "]" -> variavel_indexada
-      | nome_funcao "(" argumentos ")" -> funcao_matematica
-      | agregacao
-      | "(" expressao ")"
+// --- CONSTRAINTS (Restrições) ---
+constraint_block: "st" ":" constraint_item+ -> constraint_block
+                | "sa" ":" constraint_item+ -> constraint_block
+                | "subject" "to" ":" constraint_item+ -> constraint_block
+                | "sujeito" "a" ":" constraint_item+ -> constraint_block
 
-?agregacao: "SOMA" "DE" expressao_agregavel loop_multiplo?
+constraint_item: (IDENTIFICADOR ("[" indices "]")? ":")? logic_expr (loop_multiplo)? -> constraint_named
 
-?expressao_agregavel: expressao
+// --- EXPRESSIONS ---
+?expression: sum_expr
 
-?loop_multiplo: loop+
+?sum_expr: sum_expr "+" term -> add
+         | sum_expr "-" term -> sub
+         | term
 
-?loop: "PARA" "CADA" IDENTIFICADOR "EM" IDENTIFICADOR condicao_onde?
+?term: term "*" factor -> mul
+     | term "/" factor -> div
+     | term "%" factor -> mod
+     | factor
 
-?condicao_onde: "ONDE" expressao_logica
+?factor: power
 
-dataset_coluna: IDENTIFICADOR | STRING
+?power: atom "^" factor -> pow
+      | atom "**" factor -> pow
+      | atom
 
-indices: expressao_matematica ("," expressao_matematica)*
+?atom: NUMBER -> number
+     | STRING -> string_literal
+     | IDENTIFICADOR -> var_or_param
+     | IDENTIFICADOR "." IDENTIFICADOR -> dataset_coluna
+     | IDENTIFICADOR "[" indices "]" -> indexed_var
+     | func_call
+     | aggregation
+     | if_expr
+     | "(" expression ")"
 
-argumentos: expressao_matematica ("," expressao_matematica)*
-          |
+// --- LOGIC EXPRESSIONS ---
+?logic_expr: logic_or
 
-nome_funcao: "abs" | "max" | "min" | "sum" | "sqrt"
+?logic_or: logic_or "or" logic_and -> or_op
+         | logic_or "ou" logic_and -> or_op
+         | logic_and
 
-operador_relacional: MENOR_IGUAL | MAIOR_IGUAL | IGUAL_IGUAL | DIFERENTE | IGUAL | MENOR | MAIOR
+?logic_and: logic_and "and" logic_not -> and_op
+          | logic_and "e" logic_not -> and_op
+          | logic_not
 
-numero: NUMERO
-string: STRING
+?logic_not: "not" logic_comp -> not_op
+          | "nao" logic_comp -> not_op
+          | logic_comp
 
-MENOR_IGUAL: "<="
-MAIOR_IGUAL: ">="
-IGUAL_IGUAL: "=="
-DIFERENTE: "!="
-IGUAL: "="
-MENOR: "<"
-MAIOR: ">"
+?logic_comp: expression rel_op expression
+           | expression
 
-NUMERO: /\d+(\.\d+)?/
+rel_op: LE | GE | EQ | NE | LT | GT | EQ_ASSIGN
+
+// --- SPECIAL CONSTRUCTS ---
+aggregation: SUM "(" expression (loop_multiplo)? ")" -> sum
+           | PROD "(" expression (loop_multiplo)? ")" -> prod
+           | MIN "(" expression ("," expression)* ")" -> min_func
+           | MAX "(" expression ("," expression)* ")" -> max_func
+
+func_call: IDENTIFICADOR "(" arguments ")"
+
+if_expr: "if" "(" logic_expr "," expression "," expression ")" -> if_inline
+       | "se" "(" logic_expr "," expression "," expression ")" -> if_inline
+
+loop_multiplo: ("for" | "para") loop_item ("," loop_item)*
+
+loop_item: IDENTIFICADOR "in" set_expr ("where" logic_expr)? -> loop_simple
+         | IDENTIFICADOR "em" set_expr ("onde" logic_expr)? -> loop_simple
+
+indices: expression ("," expression)*
+arguments: expression ("," expression)*
+
+// --- TERMINALS ---
+// Keywords for Types
+INT_TYPE: "int" | "inteiro"
+BIN_TYPE: "bin" | "binario"
+CONT_TYPE: "continuous" | "continua"
+
+// Set Operators
+SET_UNION: "|"
+SET_INTER: "&"
+SET_DIFF: "\\"
+SET_CROSS: "*"
+
 STRING: /'[^']*'/ | /"[^"]*"/
-IDENTIFICADOR: /[a-zA-Z_][a-zA-Z0-9_]*/
+// F17: NUMBER does NOT match leading negative — handled by subtraction in expression grammar
+NUMBER: /\d+(\.\d+)?([eE][+-]?\d+)?/
+
+// Keywords for Sense
+MIN: "min" | "minimize" | "minimizar"
+MAX: "max" | "maximize" | "maximizar"
+
+// Keywords for Aggregation
+SUM: "sum" | "soma"
+PROD: "prod"
+
+// Relational Operators
+LE: "<="
+GE: ">="
+EQ: "=="
+NE: "!="
+LT: "<"
+GT: ">"
+EQ_ASSIGN: "="
+
+IDENTIFICADOR.-1: /[a-zA-Z_À-ÿ][a-zA-Z0-9_À-ÿ]*/
 
 %import common.WS
+%import common.CPP_COMMENT
+%import common.SH_COMMENT
 %ignore WS
+%ignore CPP_COMMENT
+%ignore SH_COMMENT  // F18: Support # comments (Python-style)
