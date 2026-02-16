@@ -1,6 +1,48 @@
-# Changelog
 
-## [3.2.1] - 2026-02-10 — Public API Fixes
+## v3.3.1 - Mathematical Robustness & Core Stability
+### 🛡️ Parser & Grammar
+- **[FIX]** `String Literals`: Implemented `ast.literal_eval` to correctly parse escaped characters (e.g., Windows paths `C:\\Path`, nested quotes `\"`).
+- **[FIX]** `Grammar`: Updated `STRING` regex to support escaped quotes, preventing syntax errors in complex string payloads.
+- **[FIX]** `Indexed Variables`: Refactored `indexed_var` to preserve AST nodes for indices, fixing bug where indices were rendered as raw string dictionaries (e.g., `x[{'type': 'number'...}]` → `x[1]`).
+
+### 🧮 Mathematical Translation
+- **[FIX]** `Power Operator`: Mapped `^` token directly to Python's `**` operator (exponentiation) instead of bitwise XOR.
+- **[FEAT]** `Relational Operators`: Enabled usage of `!=`, `<`, `>` within logical contexts (filters/`if`), mapping them to valid Python operators.
+- **[FIX]** `Set Binding`: Translator now generates guarded code (`if name is None:`) for Set initialization, ensuring overrides from `_los_data` are respected and not overwritten by CSV defaults.
+
+### 🔧 Data Binding & Integrity
+- **[FIX]** `Heuristic Matching`: `DataBindingService` now rejects DataFrames that have zero intersection with the target parameter's index, preventing incorrect data injection from unrelated CSVs.
+- **[SEC]** `Sandbox Safety`: Removed dangerous `locals()` usage in generated code for Set/Param binding, using explicit multi-step assignment logic.
+
+---
+
+## v3.3.0 - Supply Chain Core Stability & DX (Phase 3 & 3.5)
+### ✨ Developer Experience (DX)
+- **[ADD]** `LOSResult.get_variable(name, as_df=True)`: Returns structured Pandas DataFrames (MultiIndex) for optimization variables. Replaces manual string parsing.
+- **[ADD]** `tests/validate_supply_chain_results.py`: Independent cross-validation script for auditing solver results against raw CSV data.
+
+### 🛡️ Robustness & Fixes
+- **[FIX]** `DataBindingService`: Resolved silent failure when `cap_rota` column was missing (Created `bases_exemplos/cap_rota.csv`).
+- **[FIX]** `LOSModel.solve()`: Now safely captures objective value for non-optimal statuses (e.g., Infeasible with partial bound) instead of returning `None`.
+- **[FIX]** `bases_exemplos/*.csv`: Renamed headers (`Planta`→`Plantas`, `Produto`→`Produtos`) to strictly match Model Sets.
+- **[CHG]** `bases_exemplos/cap_rota.csv`: Relaxed capacity constraints (10x) to ensure feasibility in standard tests.
+
+### ⚡ Performance
+- **[AUDIT]** `PuLPTranslator`: Confirmed use of generator expressions in `lpSum` (O(1) memory overhead) vs list comprehensions.
+
+---
+
+## v3.2.2 - Data Binding (Phase 2)
+### Features
+- **Data Binding**: `los.solve(source, data=...)` agora aceita dicionários, DataFrames e Series.
+- **Auto-Alignment**: Parâmetros indexados (e.g. `param p[i,j]`) automapeiam DataFrames com MultiIndex correto.
+- **E2E Demo**: Novo exemplo `examples/run_supply_chain.py` demonstrando injeção de dados reais.
+
+### Fixes
+- **Set Literals**: Corrigido erro `NameError` ao usar membros de set (ex: `A` em `set S={A}`) em restrições. O tradutor agora gera definições Python para literais.
+- **LOSResult**: Corrigido atributo `solve_time` para `time`.
+
+## v3.2.1 - Public API & Core Fixes (Phase 1)Fixes
 ### 🐛 Critical Bug Fixes
 - [FIX] `PuLPTranslator._visit_constraint`: Agor gera loops aninhados (`for x in S: for y in T:`) em vez de sintaxe inválida, e anexa índices ao nome da restrição (`r1_P1_C1`).
 - [FIX] `PuLPTranslator._visit_param`: Corrigida geração de dicionários para múltiplos índices (`{i: {j: val}}`) compatível com `LpVariable.dicts`.
@@ -14,7 +56,7 @@
 
 ---
 
-## [3.2.0] - 2026-02-09 — Public API (A01-A04)
+## [3.2.0] — Public API (A01-A04)
 ### ✨ New Public API
 - [ADD] `los.compile(source)` — compila texto LOS ou arquivo `.los` → `LOSModel` (A01)
 - [ADD] `LOSModel.solve(backend, time_limit, msg)` — executa modelo e retorna `LOSResult` (A02)
@@ -37,7 +79,7 @@
 
 ---
 
-## [3.1.1] - 2026-02-09 — Supply Chain E2E Integration
+## [3.1.1] — Supply Chain E2E Integration
 ### ✨ Features
 - [ADD] Modelo complexo `modelos/supply_chain_network.los` — Supply Chain Network Design com 4 plantas × 6 produtos × 8 clientes
 - [ADD] 6 datasets CSV em `bases_exemplos/`: `plantas.csv`, `produtos_scm.csv`, `clientes_scm.csv`, `demanda.csv`, `custo_transporte.csv`, `capacidade_fabrica.csv`
@@ -52,7 +94,7 @@
 
 ---
 
-## [3.1.0] - 2026-02-09 — Deep Remediation (Phase 1.5 + 1.6)
+## [3.1.0] — Deep Remediation (Phase 1.5 + 1.6)
 ### 🔴 Critical Fixes (F01-F05)
 - [FIX] `F01` Parser Transformer state leak — `_variables_registry` limpo a cada `parse()` call
 - [FIX] `F02` Expression `__post_init__` removido — validação via `validate()` explícito
@@ -96,7 +138,7 @@
 
 ---
 
-## [2025-07-03] - Análise Completa e Atualização da LIB LOS
+## Análise Completa e Atualização da LIB LOS
 ### 🏗️ Core & Architecture
 - **Clean Architecture Compliance**: Mapeamento completo e documentado das camadas:
   - `Domain`: Entidades e regras de negócio puras (ex: `Expression`, `Variable`).
