@@ -1,7 +1,7 @@
 """
 🏗️ LOSModel — Modelo de otimização compilado, pronto para resolver
 
-A01/A02: Encapsula o pipeline parse→translate e executa via PuLP.
+Encapsula o pipeline parse→translate e executa via PuLP.
 """
 
 import time as _time
@@ -54,7 +54,7 @@ class LOSModel:
         msg: bool = False
     ) -> LOSResult:
         """
-        A02: Executa o modelo compilado e retorna LOSResult.
+        Executa o modelo compilado e retorna LOSResult.
 
         Args:
             backend: Solver backend ('pulp' por enquanto)
@@ -102,8 +102,16 @@ class LOSModel:
             )
 
         # Extrair resultados
+        # Extrair resultados
         status_str = pulp.LpStatus.get(prob.status, "Unknown")
-        obj_value = pulp.value(prob.objective) if prob.status == pulp.constants.LpStatusOptimal else None
+        
+        if prob.status == pulp.constants.LpStatusOptimal:
+            obj_value = pulp.value(prob.objective)
+            # Se for None mas é Optimal, assume 0.0 (problema de viabilidade ou custo zero)
+            if obj_value is None:
+                obj_value = 0.0
+        else:
+            obj_value = None
 
         # Extrair variáveis com seus valores
         var_dict = {}

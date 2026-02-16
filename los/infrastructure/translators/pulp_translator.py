@@ -247,18 +247,16 @@ class PuLPTranslator(ITranslatorAdapter):
         if value:
              val_str = self._visit(value)
              if indices:
-                 idx_vars = []
-                 loop_parts = []
-                 for k, idx_set_raw in enumerate(indices):
-                     idx_set = self._sanitize_name(idx_set_raw)
-                     loop_var = self._sanitize_name(f"i_{k}")  # F16
-                     idx_vars.append(loop_var)
-                     loop_parts.append(f"for {loop_var} in {idx_set}")
+                 idx_sets = [(self._sanitize_name(f"i_{k}"), self._sanitize_name(idx))
+                             for k, idx in enumerate(indices)]
                  
-                 key_str = idx_vars[0] if len(idx_vars) == 1 else f"({', '.join(idx_vars)})"
-                 loop_str = " ".join(loop_parts)
-                     
-                 return f"{name} = {{{key_str}: {val_str} {loop_str}}}"
+                 # Build nested dict comprehension from inside out
+                 # For [Plantas, Produtos]: {i_0: {i_1: 0 for i_1 in Produtos} for i_0 in Plantas}
+                 inner = val_str
+                 for loop_var, idx_set in reversed(idx_sets):
+                     inner = f"{{{loop_var}: {inner} for {loop_var} in {idx_set}}}"
+                 
+                 return f"{name} = {inner}"
              return f"{name} = {val_str}"
         return f"{name} = {{}} # Param undefined"
 
@@ -323,20 +321,36 @@ class PuLPTranslator(ITranslatorAdapter):
         loops = node.get('loops')
         
         comparison = self._visit(expr_node)
-        name_part = f", '{name}'" if name else ""
         
         if loops:
-            loop_headers = []
+            lines = []
+            indent = ""
+            loop_vars = []
+            
             for loop in loops:
                 loop_var = self._sanitize_name(loop.get('var'))  # F16
                 loop_in = self._visit(loop.get('source'))
                 condition = loop.get('condition')
                 cond_str = f" if {self._visit(condition)}" if condition else ""
-                loop_headers.append(f"for {loop_var} in {loop_in}{cond_str}")
+                
+                lines.append(f"{indent}for {loop_var} in {loop_in}{cond_str}:")
+                indent += "    "
+                loop_vars.append(loop_var)
             
-            header = " ".join(loop_headers)
-            return f"{header}:\n    prob += {comparison}{name_part}"
+            # Dynamic naming: append loop vars to name to ensure uniqueness
+            # e.g. f'atendimento_{c}_{j}'
+            name_expr = ""
+            if name:
+                if loop_vars:
+                    suffix = "_".join([f"{{{v}}}" for v in loop_vars])
+                    name_expr = f", f'{name}_{suffix}'"
+                else:
+                    name_expr = f", '{name}'"
+            
+            lines.append(f"{indent}prob += {comparison}{name_expr}")
+            return "\n".join(lines)
         else:
+            name_part = f", '{name}'" if name else ""
             return f"prob += {comparison}{name_part}"
 
     def _visit_comparison(self, node):

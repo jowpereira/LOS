@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.2.1] - 2026-02-10 — Public API Fixes
+### 🐛 Critical Bug Fixes
+- [FIX] `PuLPTranslator._visit_constraint`: Agor gera loops aninhados (`for x in S: for y in T:`) em vez de sintaxe inválida, e anexa índices ao nome da restrição (`r1_P1_C1`).
+- [FIX] `PuLPTranslator._visit_param`: Corrigida geração de dicionários para múltiplos índices (`{i: {j: val}}`) compatível com `LpVariable.dicts`.
+- [FIX] `LOSModel.solve()`: Trata retorno `None` do `pulp.value(objective)` em problemas de viabilidade/custo zero (assume 0.0).
+
+### 📊 Validação Final
+- Modelo `supply_chain_network.los` resolvido com sucesso!
+- **116 restrições, 225 variáveis, 444 elementos**
+- Tempo de resolução: **0.02s** (CBC)
+- Status: **Optimal**, Objective: **0.0**
+
+---
+
 ## [3.2.0] - 2026-02-09 — Public API (A01-A04)
 ### ✨ New Public API
 - [ADD] `los.compile(source)` — compila texto LOS ou arquivo `.los` → `LOSModel` (A01)
