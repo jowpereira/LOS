@@ -1,7 +1,7 @@
 """
 📊 LOSResult — Resultado da resolução de um modelo de otimização
 
-A03: Encapsula status, objective, variables, e tempo de resolução.
+Encapsula status, objective, variables, e tempo de resolução.
 """
 
 from typing import Dict, Optional
@@ -63,6 +63,56 @@ class LOSResult:
             f"vars={len(self.variables)}, "
             f"time={self.time:.3f}s)"
         )
+
+    def get_variable(self, name: str, as_df: bool = True):
+        """
+        Retorna os valores de uma variável específica de forma estruturada.
+        
+        Args:
+            name: Nome base da variável (ex: "envio", "fabrica").
+            as_df: Se True, retorna como pandas Series/DataFrame (requer pandas).
+                   Se False, retorna como dicionário aninhado ou simples.
+        """
+        # Prefix check
+        prefix = f"{name}_"
+        filtered = {}
+        
+        for k, v in self.variables.items():
+            if k == name:
+                # Scalar
+                return v
+            elif k.startswith(prefix):
+                # Indexed
+                idx_part = k[len(prefix):]
+                # Simplistic split by underscore. 
+                # Assumption: parameter names don't have underscores or are handled by prefix.
+                # Assumption: index values don't have underscores.
+                parts = tuple(idx_part.split('_'))
+                if len(parts) == 1:
+                    filtered[parts[0]] = v
+                else:
+                    filtered[parts] = v
+                    
+        if not filtered:
+            return {}
+            
+        if as_df:
+            try:
+                import pandas as pd
+                # Handle multi-index
+                first_key = next(iter(filtered))
+                if isinstance(first_key, tuple):
+                    # Create MultiIndex
+                    tuples = list(filtered.keys())
+                    index = pd.MultiIndex.from_tuples(tuples, names=[f"idx_{i}" for i in range(len(tuples[0]))])
+                    return pd.Series(list(filtered.values()), index=index, name=name)
+                else:
+                    # Simple Index
+                    return pd.Series(filtered, name=name)
+            except ImportError:
+                pass 
+                
+        return filtered
 
     def __bool__(self) -> bool:
         """LOSResult é truthy se o status é Optimal."""

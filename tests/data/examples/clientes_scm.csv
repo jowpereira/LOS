@@ -1,0 +1,9 @@
+Clientes,Regiao,Prioridade,Contrato_Minimo,Limite_Credito,SLA_Dias
+C01,Sudeste,A,500,250000,3
+C02,Sul,B,200,120000,5
+C03,Nordeste,A,350,180000,4
+C04,Centro_Oeste,C,100,80000,7
+C05,Sul,B,250,150000,5
+C06,Sudeste,A,400,200000,3
+C07,Nordeste,C,150,90000,7
+C08,Centro_Oeste,B,180,110000,6

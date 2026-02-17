@@ -1,7 +1,4 @@
-"""
-💻 LOS CLI - Interface de Linha de Comando
-Interface CLI profissional para o sistema LOS modularizado
-"""
+"""Interface CLI do sistema LOS."""
 
 import asyncio
 import json
@@ -23,62 +20,47 @@ from ...application.dto.expression_dto import (
 from ...infrastructure.parsers.los_parser import LOSParser
 from ...infrastructure.translators.pulp_translator import PuLPTranslator
 from ...infrastructure.validators.los_validator import LOSValidator
-from ...domain.repositories.interfaces import (
-    IExpressionRepository,
-    IGrammarRepository
-)
+from ...infrastructure.repositories.json_repository import JsonExpressionRepository
+from ...infrastructure.repositories.in_memory import InMemoryGrammarRepository
+from ...adapters.file.los_file_processor import LOSFileProcessor
 from ...shared.logging.logger import get_logger
 
 
-# Mock repositories para demonstração
-class MockExpressionRepository:
-    """Mock repository para demonstração"""
-    async def save(self, expression): return expression
-    async def find_by_id(self, expr_id): return None
-    async def find_by_type(self, expr_type): return []
-    async def find_all(self): return []
-    async def delete(self, expr_id): return True
-    async def count(self): return 0
-
-class MockGrammarRepository:
-    """Mock repository para demonstração"""
-    async def load_grammar(self, name="los_grammar"): return ""
-    async def save_grammar(self, name, content): return True
-    async def list_grammars(self): return ["los_grammar"]
-
-
 class LOSCli:
-    """
-    Interface CLI principal para o sistema LOS
-    Fornece comandos para parsing, validação, tradução e processamento em lote
-    """
+    """Interface CLI principal."""
     
     def __init__(self):
         self._logger = get_logger('adapters.cli')
         self._service = self._initialize_service()
     
     def _initialize_service(self) -> ExpressionService:
-        """Inicializa serviços e dependências"""
+        """Inicializa serviços com implementações reais."""
         try:
-            # Repositórios mock
-            expr_repo = MockExpressionRepository()
-            grammar_repo = MockGrammarRepository()
+            # Repositories
+            # Persistência em JSON na home do usuário
+            expr_repo = JsonExpressionRepository()
             
-            # Adaptadores
+            # Gramática pode manter em memória (carrega do arquivo .lark se disponível)
+            # Como o parser já carrega o arquivo, o repo de gramática é secundário aqui
+            grammar_repo = InMemoryGrammarRepository()
+            
+            # Adapters
             parser_adapter = LOSParser()
             translator_adapter = PuLPTranslator()
             validator_adapter = LOSValidator()
+            file_adapter = LOSFileProcessor()
             
-            # Serviço principal
+            # Service
             service = ExpressionService(
                 expression_repository=expr_repo,
                 grammar_repository=grammar_repo,
                 parser_adapter=parser_adapter,
                 translator_adapter=translator_adapter,
-                validator_adapter=validator_adapter
+                validator_adapter=validator_adapter,
+                file_adapter=file_adapter
             )
             
-            self._logger.info("Serviços CLI inicializados com sucesso")
+            self._logger.info("Serviços CLI inicializados com sucesso (Mode: Real)")
             return service
             
         except Exception as e:
@@ -92,13 +74,9 @@ cli_instance = LOSCli()
 
 
 @click.group()
-@click.version_option(version="2.0.0", prog_name="LOS CLI")
+@click.version_option(version="2.1.0", prog_name="LOS CLI")
 def los():
-    """
-    🚀 LOS - Linguagem de Otimização Simples
-    
-    Sistema modular para análise e tradução de expressões de otimização matemática.
-    """
+    """Sistema modular para análise e tradução de expressões."""
     pass
 
 
@@ -111,11 +89,7 @@ def los():
               default='text', help='Formato de saída')
 def parse(expression: str, validate: bool, save: bool, output: Optional[str], 
           output_format: str):
-    """
-    Analisa uma expressão LOS
-    
-    EXPRESSION: Expressão LOS para analisar
-    """
+    """Analisa uma expressão LOS."""
     async def _parse():
         try:
             click.echo("🔍 Analisando expressão...")
@@ -126,7 +100,8 @@ def parse(expression: str, validate: bool, save: bool, output: Optional[str],
                 save_result=save
             )
             
-            result = await cli_instance._service.parse_expression(request)
+            loop = asyncio.get_running_loop()
+            result = await loop.run_in_executor(None, cli_instance._service.parse_expression, request)
             
             if output_format == 'json':
                 output_data = {
@@ -148,7 +123,6 @@ def parse(expression: str, validate: bool, save: bool, output: Optional[str],
                 
                 output_text = json.dumps(output_data, indent=2, ensure_ascii=False)
             else:
-                # Formato texto
                 output_lines = []
                 
                 if result.success:
@@ -164,6 +138,9 @@ def parse(expression: str, validate: bool, save: bool, output: Optional[str],
                     
                     if result.dataset_references:
                         output_lines.append(f"📂 Datasets: {', '.join(result.dataset_references)}")
+                    
+                    if save and result.id:
+                        output_lines.append(f"💾 Salvo no DB com ID: {result.id}")
                     
                 else:
                     output_lines.append("❌ Análise falhou!")
@@ -198,11 +175,7 @@ def parse(expression: str, validate: bool, save: bool, output: Optional[str],
 @click.option('--output', '-o', type=str, help='Arquivo de relatório')
 def process_file(file_path: str, encoding: str, validate: bool, save: bool, 
                 output: Optional[str]):
-    """
-    Processa arquivo .los
-    
-    FILE_PATH: Caminho do arquivo .los para processar
-    """
+    """Processa arquivo .los."""
     async def _process():
         try:
             click.echo(f"📁 Processando arquivo: {file_path}")
@@ -214,7 +187,9 @@ def process_file(file_path: str, encoding: str, validate: bool, save: bool,
                 save_expressions=save
             )
             
-            result = await cli_instance._service.process_file(request)
+            # O serviço faz parsing síncrono internamente na v3, mas vamos manter async wrapper se necessário
+            loop = asyncio.get_running_loop()
+            result = await loop.run_in_executor(None, cli_instance._service.process_file, request)
             
             # Exibir resumo
             click.echo(f"📊 Resumo do processamento:")
@@ -269,39 +244,34 @@ def process_file(file_path: str, encoding: str, validate: bool, save: bool,
               default='pulp', help='Linguagem/framework alvo')
 @click.option('--output', '-o', type=str, help='Arquivo de saída')
 def translate(expression: str, target: str, output: Optional[str]):
-    """
-    Traduz expressão LOS para linguagem alvo
-    
-    EXPRESSION: Expressão LOS para traduzir
-    """
+    """Traduz expressão LOS para linguagem alvo."""
     async def _translate():
         try:
             click.echo(f"🔄 Traduzindo para {target}...")
             
-            # Criar instância do tradutor diretamente para demonstração
-            translator = PuLPTranslator()
-            
-            request = TranslationRequestDTO(
-                expression_text=expression,
-                target_language="python",
-                target_framework=target
+            # Usar o serviço para garantir fluxo correto de parsing -> entity -> translation
+            request = ExpressionRequestDTO(
+                text=expression,
+                validate=True,
+                save_result=False
             )
             
-            result = await translator.translate(request)
+            loop = asyncio.get_running_loop()
+            result = await loop.run_in_executor(None, cli_instance._service.parse_expression, request)
             
-            if result.translation_success:
+            if result.success and result.is_valid:
                 click.echo("✅ Tradução concluída!")
                 click.echo(f"📝 Expressão original:")
-                click.echo(f"   {result.source_text}")
-                click.echo(f"🐍 Código {result.target_framework}:")
-                click.echo(result.translated_code)
+                click.echo(f"   {result.original_text}")
+                click.echo(f"🐍 Código {target}:")
+                click.echo(result.python_code)
                 
                 if output:
-                    Path(output).write_text(result.translated_code, encoding='utf-8')
+                    Path(output).write_text(result.python_code, encoding='utf-8')
                     click.echo(f"📄 Código salvo em: {output}")
             else:
-                click.echo("❌ Tradução falhou!")
-                for error in result.translation_errors:
+                click.echo("❌ Tradução falhou (Expressão inválida)!")
+                for error in result.errors:
                     click.echo(f"   ⚠️  {error}")
             
         except Exception as e:
@@ -313,43 +283,36 @@ def translate(expression: str, target: str, output: Optional[str]):
 
 @los.command()
 @click.argument('expression', type=str)
-@click.option('--rules', type=str, help='Regras específicas (separadas por vírgula)')
-def validate(expression: str, rules: Optional[str]):
-    """
-    Valida expressão LOS
-    
-    EXPRESSION: Expressão LOS para validar
-    """
+def validate(expression: str):
+    """Valida expressão LOS."""
     async def _validate():
         try:
             click.echo("✅ Validando expressão...")
             
-            # Criar instância do validador diretamente
-            validator = LOSValidator()
-            
-            validation_rules = rules.split(',') if rules else None
-            
-            request = ValidationRequestDTO(
-                expression_text=expression,
-                validation_rules=validation_rules
+            # Usar o serviço completo
+            request = ExpressionRequestDTO(
+                text=expression,
+                validate=True,
+                save_result=False
             )
             
-            result = await validator.validate(request)
+            loop = asyncio.get_running_loop()
+            result = await loop.run_in_executor(None, cli_instance._service.parse_expression, request)
             
             if result.is_valid:
                 click.echo("✅ Expressão válida!")
+                click.echo(f"🏷️  Tipo: {result.expression_type}")
+                click.echo(f"📊 Complexidade: {result.complexity.get('level', 'N/A')}")
             else:
                 click.echo("❌ Expressão inválida!")
                 
-                for error in result.errors:
+                for error in result.validation_errors:
                     click.echo(f"   ❌ {error}")
             
             if result.warnings:
                 click.echo("⚠️  Avisos:")
                 for warning in result.warnings:
                     click.echo(f"   📋 {warning}")
-            
-            click.echo(f"🔧 Regras aplicadas: {', '.join(result.applied_rules)}")
             
         except Exception as e:
             click.echo(f"❌ Erro: {e}", err=True)
@@ -360,12 +323,14 @@ def validate(expression: str, rules: Optional[str]):
 
 @los.command()
 def stats():
-    """Exibe estatísticas do sistema"""
+    """Exibe estatísticas do sistema."""
     async def _stats():
         try:
             click.echo("📊 Compilando estatísticas...")
             
-            result = await cli_instance._service.get_statistics()
+            # Agora busca do repo JSON real
+            loop = asyncio.get_running_loop()
+            result = await loop.run_in_executor(None, cli_instance._service.get_statistics)
             
             click.echo("📈 Estatísticas do Sistema LOS:")
             click.echo(f"   📄 Total de expressões: {result.total_expressions}")
@@ -393,10 +358,12 @@ def stats():
 @click.option('--rules', is_flag=True, help='Listar regras de validação disponíveis')
 @click.option('--languages', is_flag=True, help='Listar linguagens de tradução suportadas')
 def info(rules: bool, languages: bool):
-    """Exibe informações do sistema"""
+    """Exibe informações do sistema."""
     try:
+        # Acessa adaptadores via serviço protegido (embora _hacky, é prático para CLI info)
+        # Numa arquitetura pura, o Service deveria expor metadados.
         if rules:
-            validator = LOSValidator()
+            validator = cli_instance._service._validator_adapter
             available_rules = validator.get_available_rules()
             
             click.echo("🔧 Regras de validação disponíveis:")
@@ -407,7 +374,7 @@ def info(rules: bool, languages: bool):
                              f"({rule_info['severity']})")
         
         elif languages:
-            translator = PuLPTranslator()
+            translator = cli_instance._service._translator_adapter
             supported = translator.get_supported_languages()
             
             click.echo("🗣️  Linguagens de tradução suportadas:")
@@ -415,11 +382,13 @@ def info(rules: bool, languages: bool):
                 click.echo(f"   {lang}")
         
         else:
+            parser_ver = cli_instance._service._parser_adapter.get_version()
+            
             click.echo("ℹ️  Sistema LOS - Linguagem de Otimização Simples")
-            click.echo("   Versão: 2.0.0")
+            click.echo("   Versão CLI: 2.1.0 (Functional)")
+            click.echo(f"   Parser Core: {parser_ver}")
             click.echo("   Arquitetura: Clean Architecture + Hexagonal")
-            click.echo("   Parser: Lark-based")
-            click.echo("   Frameworks suportados: PuLP")
+            click.echo("   Persistência: JSON")
             click.echo("")
             click.echo("Use --help com qualquer comando para mais informações.")
     

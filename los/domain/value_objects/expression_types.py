@@ -1,7 +1,4 @@
-"""
-🎯 Value Objects - Objetos de Valor
-Tipos imutáveis que representam conceitos do domínio
-"""
+"""Objetos de Valor do Domínio."""
 
 from enum import Enum
 from dataclasses import dataclass
@@ -10,7 +7,7 @@ from abc import ABC
 
 
 class ExpressionType(Enum):
-    """Tipos de expressão suportados pela linguagem LOS"""
+    """Tipos de expressão."""
     OBJECTIVE = "objective"
     CONSTRAINT = "constraint"  
     CONDITIONAL = "conditional"
@@ -20,7 +17,7 @@ class ExpressionType(Enum):
 
 
 class OperationType(Enum):
-    """Tipos de operação matemática"""
+    """Tipos de operação."""
     MINIMIZE = "minimize"
     MAXIMIZE = "maximize"
     LESS_EQUAL = "less_equal"
@@ -41,7 +38,7 @@ class OperationType(Enum):
 
 
 class FunctionType(Enum):
-    """Funções matemáticas suportadas"""
+    """Funções matemáticas."""
     ABS = "abs"
     MAX = "max"
     MIN = "min"
@@ -51,7 +48,7 @@ class FunctionType(Enum):
     
 @dataclass(frozen=True)
 class Variable:
-    """Representa uma variável de decisão"""
+    """Variável de decisão."""
     name: str
     indices: tuple = ()
     variable_type: str = "continuous"
@@ -62,16 +59,16 @@ class Variable:
     
     @property
     def is_indexed(self) -> bool:
-        """Verifica se a variável é indexada"""
+        """Verifica se variável é indexada."""
         return len(self.indices) > 0
     
     @property 
     def dimensions(self) -> int:
-        """Retorna número de dimensões da variável"""
+        """Número de dimensões."""
         return len(self.indices)
     
     def to_python_code(self) -> str:
-        """Converte para código Python válido"""
+        """Converte para string Python."""
         if self.is_indexed:
             indices_str = ",".join(str(idx) for idx in self.indices)
             return f"{self.name}[{indices_str}]"
@@ -80,7 +77,7 @@ class Variable:
 
 @dataclass(frozen=True)
 class DatasetReference:
-    """Referência a um dataset externo"""
+    """Referência a dataset externo."""
     dataset_name: str
     column_name: str
     
@@ -89,7 +86,7 @@ class DatasetReference:
             raise ValueError("Dataset e coluna devem ser especificados")
     
     def to_python_code(self) -> str:
-        """Converte para código Python válido"""
+        """Converte para string Python."""
         # Tratar colunas com espaços
         if ' ' in self.column_name or "'" in self.column_name:
             return f"{self.dataset_name}['{self.column_name}']"
@@ -98,7 +95,7 @@ class DatasetReference:
 
 @dataclass(frozen=True)
 class ComplexityMetrics:
-    """Métricas de complexidade de uma expressão"""
+    """Métricas de complexidade."""
     nesting_level: int = 1
     variable_count: int = 0
     operation_count: int = 0
@@ -107,7 +104,7 @@ class ComplexityMetrics:
     
     @property
     def total_complexity(self) -> int:
-        """Calcula complexidade total"""
+        """Calcula complexidade total."""
         return (
             self.nesting_level +
             self.variable_count + 
@@ -118,7 +115,7 @@ class ComplexityMetrics:
     
     @property
     def complexity_level(self) -> str:
-        """Retorna nível de complexidade em string"""
+        """Nível de complexidade (BAIXA, MÉDIA, ALTA...)."""
         if self.total_complexity <= 5:
             return "BAIXA"
         elif self.total_complexity <= 15:

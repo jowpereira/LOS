@@ -1,16 +1,10 @@
-"""
-❌ Sistema de Tratamento de Erros Customizado
-Exceções específicas do domínio LOS para melhor rastreabilidade
-"""
+"""Tratamento de Erros Customizado."""
 
 from typing import Any, Dict, Optional, List
 
 
 class LOSError(Exception):
-    """
-    Classe base para todas as exceções do sistema LOS
-    Implementa estrutura consistente de erros com contexto
-    """
+    """Base para exceções do sistema LOS."""
     
     def __init__(
         self, 
@@ -26,7 +20,7 @@ class LOSError(Exception):
         super().__init__(self.message)
     
     def to_dict(self) -> Dict[str, Any]:
-        """Converte erro para dicionário para serialização"""
+        """Serializa erro para dicionário."""
         return {
             'error_type': self.__class__.__name__,
             'error_code': self.error_code,
@@ -37,7 +31,7 @@ class LOSError(Exception):
 
 
 class ParseError(LOSError):
-    """Erro durante parsing de expressões LOS"""
+    """Erro de parsing."""
     
     def __init__(
         self, 
@@ -61,7 +55,7 @@ class ParseError(LOSError):
 
 
 class ValidationError(LOSError):
-    """Erro de validação de expressões ou dados"""
+    """Erro de validação."""
     
     def __init__(
         self, 
@@ -83,7 +77,7 @@ class ValidationError(LOSError):
 
 
 class TranslationError(LOSError):
-    """Erro durante tradução de expressões LOS para Python/PuLP"""
+    """Erro de tradução."""
     
     def __init__(
         self, 
@@ -105,7 +99,7 @@ class TranslationError(LOSError):
 
 
 class ConfigurationError(LOSError):
-    """Erro de configuração do sistema"""
+    """Erro de configuração."""
     
     def __init__(
         self, 
@@ -127,7 +121,7 @@ class ConfigurationError(LOSError):
 
 
 class BusinessRuleError(LOSError):
-    """Erro de violação de regras de negócio"""
+    """Erro de regra de negócio."""
     
     def __init__(
         self, 
@@ -149,7 +143,7 @@ class BusinessRuleError(LOSError):
 
 
 class FileError(LOSError):
-    """Erro relacionado a operações de arquivo"""
+    """Erro de arquivo."""
     
     def __init__(
         self, 
@@ -171,7 +165,7 @@ class FileError(LOSError):
 
 
 class InternalError(LOSError):
-    """Erro interno não esperado"""
+    """Erro interno."""
     
     def __init__(
         self, 
@@ -186,16 +180,13 @@ class InternalError(LOSError):
         )
 
 
-# Factory para converter exceções padrão em LOSError
 def wrap_exception(
     exception: Exception, 
     message: Optional[str] = None,
     error_code: str = "UNKNOWN_ERROR",
     context: Optional[Dict[str, Any]] = None
 ) -> LOSError:
-    """
-    Converte exceção padrão em LOSError (InternalError)
-    """
+    """Converte exceção padrão em LOSError."""
     final_message = message or str(exception)
     
     # Se já for LOSError, retorna ela mesma

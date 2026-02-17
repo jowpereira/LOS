@@ -1,7 +1,4 @@
-"""
-📤 Data Transfer Objects (DTOs)
-Objetos para transferência de dados entre camadas
-"""
+"""Objetos de Transferência de Dados (DTOs)."""
 
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any
@@ -11,7 +8,7 @@ from uuid import UUID
 
 @dataclass
 class ExpressionRequestDTO:
-    """DTO para requisições de análise de expressão"""
+    """Requisição de análise."""
     text: str
     validate: bool = True
     save_result: bool = False
@@ -20,7 +17,7 @@ class ExpressionRequestDTO:
 
 @dataclass
 class ExpressionResponseDTO:
-    """DTO para resposta de análise de expressão"""
+    """Resposta de análise."""
     id: str
     original_text: str
     python_code: str
@@ -39,7 +36,7 @@ class ExpressionResponseDTO:
 
 @dataclass
 class BatchProcessRequestDTO:
-    """DTO para processamento em lote de expressões"""
+    """Requisição de processamento em lote."""
     expressions: List[str]
     validate_all: bool = True
     save_results: bool = False
@@ -48,7 +45,7 @@ class BatchProcessRequestDTO:
 
 @dataclass  
 class BatchProcessResponseDTO:
-    """DTO para resposta de processamento em lote"""
+    """Resposta de processamento em lote."""
     total_processed: int
     successful: int
     failed: int
@@ -59,7 +56,7 @@ class BatchProcessResponseDTO:
 
 @dataclass
 class FileProcessRequestDTO:
-    """DTO para processamento de arquivo .los"""
+    """Requisição de processamento de arquivo."""
     file_path: str
     encoding: str = "utf-8"
     validate_syntax: bool = True
@@ -68,7 +65,7 @@ class FileProcessRequestDTO:
 
 @dataclass
 class FileProcessResponseDTO:
-    """DTO para resposta de processamento de arquivo"""
+    """Resposta de processamento de arquivo."""
     file_path: str
     expressions_found: int
     expressions_processed: int
@@ -79,7 +76,7 @@ class FileProcessResponseDTO:
 
 @dataclass
 class ValidationRequestDTO:
-    """DTO para requisições de validação"""
+    """Requisição de validação."""
     expression_id: Optional[str] = None
     expression_text: Optional[str] = None
     validation_rules: List[str] = field(default_factory=list)
@@ -87,7 +84,7 @@ class ValidationRequestDTO:
 
 @dataclass
 class ValidationResponseDTO:
-    """DTO para resposta de validação"""
+    """Resposta de validação."""
     is_valid: bool
     errors: List[str]
     warnings: List[str]
@@ -96,7 +93,7 @@ class ValidationResponseDTO:
 
 @dataclass
 class TranslationRequestDTO:
-    """DTO para requisições de tradução"""
+    """Requisição de tradução."""
     expression_id: Optional[str] = None
     expression_text: Optional[str] = None
     target_language: str = "python"
@@ -105,7 +102,7 @@ class TranslationRequestDTO:
 
 @dataclass
 class TranslationResponseDTO:
-    """DTO para resposta de tradução"""
+    """Resposta de tradução."""
     source_text: str
     translated_code: str
     target_language: str
@@ -116,7 +113,7 @@ class TranslationResponseDTO:
 
 @dataclass
 class StatisticsResponseDTO:
-    """DTO para estatísticas do sistema"""
+    """Estatísticas do sistema."""
     total_expressions: int
     expressions_by_type: Dict[str, int]
     expressions_by_complexity: Dict[str, int]

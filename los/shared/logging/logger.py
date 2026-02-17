@@ -1,7 +1,4 @@
-"""
-📝 Sistema de Logging Centralizado
-Configuração profissional de logging para toda a aplicação
-"""
+"""Configuração de Logging."""
 
 import logging
 import logging.config
@@ -12,10 +9,7 @@ from datetime import datetime
 
 
 class LOSLogger:
-    """
-    Logger centralizado para todo o sistema LOS
-    Implementa padrão Singleton e configuração profissional
-    """
+    """Logger centralizado (Singleton)."""
     _instance: Optional['LOSLogger'] = None
     _initialized = False
     
@@ -30,7 +24,7 @@ class LOSLogger:
             LOSLogger._initialized = True
     
     def _setup_logging(self):
-        """Configura o sistema de logging"""
+        """Configura sistema de logging."""
         
         # Criar diretório de logs se não existir
         log_dir = Path("logs")
@@ -87,29 +81,13 @@ class LOSLogger:
         self.logger.info("Sistema de logging LOS inicializado com sucesso")
     
     def get_logger(self, name: str = 'los') -> logging.Logger:
-        """
-        Retorna uma instância de logger para um módulo específico
-        
-        Args:
-            name: Nome do módulo/classe que está solicitando o logger
-            
-        Returns:
-            Logger configurado
-        """
+        """Retorna logger para módulo."""
         return logging.getLogger(f"los.{name}")
 
 
 # Função factory para obter logger facilmente
 def get_logger(name: str = 'main') -> logging.Logger:
-    """
-    Factory function para obter logger facilmente
-    
-    Args:
-        name: Nome do componente/módulo
-        
-    Returns:
-        Logger configurado
-    """
+    """Factory function para obter logger."""
     los_logger = LOSLogger()
     return los_logger.get_logger(name)
 

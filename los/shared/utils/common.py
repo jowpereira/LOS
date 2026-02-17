@@ -1,7 +1,4 @@
-"""
-🛠️ Utility Functions - Funções Utilitárias Compartilhadas
-Utilitários comuns usados por todas as camadas do sistema
-"""
+"""Funções Utilitárias Compartilhadas."""
 
 import re
 import hashlib
@@ -12,19 +9,11 @@ from pathlib import Path
 
 
 class TextUtils:
-    """Utilitários para manipulação de texto"""
+    """Utilitários de texto."""
     
     @staticmethod
     def normalize_expression_text(text: str) -> str:
-        """
-        Normaliza texto de expressão LOS
-        
-        Args:
-            text: Texto original
-            
-        Returns:
-            Texto normalizado
-        """
+        """Normaliza texto de expressão LOS."""
         # Remover espaços extras
         text = ' '.join(text.split())
         
@@ -46,15 +35,7 @@ class TextUtils:
     
     @staticmethod
     def extract_variables_from_text(text: str) -> Set[str]:
-        """
-        Extrai nomes de variáveis de texto
-        
-        Args:
-            text: Texto para analisar
-            
-        Returns:
-            Conjunto de nomes de variáveis encontradas
-        """
+        """Extrai variáveis do texto."""
         variables = set()
         
         # Padrão para variáveis indexadas: var[index]
@@ -82,15 +63,7 @@ class TextUtils:
     
     @staticmethod
     def extract_dataset_references(text: str) -> Set[tuple]:
-        """
-        Extrai referências a datasets do texto
-        
-        Args:
-            text: Texto para analisar
-            
-        Returns:
-            Conjunto de tuplas (dataset_name, column_name)
-        """
+        """Extrai referências a datasets."""
         references = set()
         
         # Padrão para dataset.coluna
@@ -111,15 +84,7 @@ class TextUtils:
     
     @staticmethod
     def is_valid_identifier(name: str) -> bool:
-        """
-        Verifica se nome é identificador válido
-        
-        Args:
-            name: Nome para verificar
-            
-        Returns:
-            True se é identificador válido
-        """
+        """Verifica se nome é identificador válido."""
         if not name:
             return False
         
@@ -140,11 +105,11 @@ class TextUtils:
 
 
 class ValidationUtils:
-    """Utilitários para validação"""
+    """Utilitários de validação."""
     
     @staticmethod
     def check_balanced_parentheses(text: str) -> bool:
-        """Verifica se parênteses estão balanceados"""
+        """Verifica se parênteses estão balanceados."""
         stack = []
         pairs = {'(': ')', '[': ']', '{': '}'}
         
@@ -161,22 +126,14 @@ class ValidationUtils:
     
     @staticmethod
     def check_balanced_quotes(text: str) -> bool:
-        """Verifica se aspas estão balanceadas"""
+        """Verifica se aspas estão balanceadas."""
         single_quotes = text.count("'")
         double_quotes = text.count('"')
         return single_quotes % 2 == 0 and double_quotes % 2 == 0
     
     @staticmethod
     def validate_expression_type(text: str) -> Optional[str]:
-        """
-        Detecta tipo de expressão baseado no texto
-        
-        Args:
-            text: Texto da expressão
-            
-        Returns:
-            Tipo detectado ou None se indeterminado
-        """
+        """Detecta tipo de expressão."""
         text_upper = text.upper().strip()
         
         # Objetivos
@@ -196,55 +153,41 @@ class ValidationUtils:
         if any(op in text for op in comparison_operators):
             return 'constraint'
         
-        # Matemática (default)
-        return 'mathematical'
+        # Matemática (contém operadores ou funções)
+        if any(op in text for op in ['+', '-', '*', '/', '^']):
+             return 'mathematical'
+        
+        return 'unknown'
 
 
 class HashUtils:
-    """Utilitários para geração de hash"""
+    """Utilitários de hash."""
     
     @staticmethod
     def generate_expression_hash(text: str) -> str:
-        """
-        Gera hash único para expressão
-        
-        Args:
-            text: Texto da expressão
-            
-        Returns:
-            Hash SHA-256 em hexadecimal
-        """
+        """Gera hash SHA-256 para expressão."""
         # Normalizar texto antes do hash
         normalized = TextUtils.normalize_expression_text(text)
         return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
     
     @staticmethod
     def generate_cache_key(prefix: str, *args) -> str:
-        """
-        Gera chave de cache consistente
-        
-        Args:
-            prefix: Prefixo da chave
-            *args: Argumentos para incluir na chave
-            
-        Returns:
-            Chave de cache
-        """
+        """Gera chave de cache consistente."""
         content = f"{prefix}:{':'.join(str(arg) for arg in args)}"
         return hashlib.md5(content.encode('utf-8')).hexdigest()
 
 
 class TimeUtils:
-    """Utilitários para tempo"""
+    """Utilitários de tempo."""
     
     @staticmethod
     def get_iso_timestamp() -> str:
-        """Retorna timestamp ISO atual"""
+        """Retorna timestamp ISO atual."""
         return datetime.now(timezone.utc).isoformat()
     
     @staticmethod
     def measure_execution_time(func):
-        """Decorator para medir tempo de execução"""
+        """Decorator para medir tempo de execução."""
         def wrapper(*args, **kwargs):
             start_time = time.time()
             result = func(*args, **kwargs)
@@ -260,19 +203,11 @@ class TimeUtils:
 
 
 class FileUtils:
-    """Utilitários para arquivos"""
+    """Utilitários de arquivo."""
     
     @staticmethod
     def ensure_directory_exists(file_path: Union[str, Path]) -> Path:
-        """
-        Garante que diretório do arquivo existe
-        
-        Args:
-            file_path: Caminho do arquivo
-            
-        Returns:
-            Path do diretório criado
-        """
+        """Garante que diretório existe."""
         path = Path(file_path)
         directory = path.parent if path.suffix else path
         directory.mkdir(parents=True, exist_ok=True)
@@ -280,35 +215,18 @@ class FileUtils:
     
     @staticmethod
     def get_file_extension(file_path: str) -> str:
-        """Retorna extensão do arquivo"""
+        """Retorna extensão do arquivo."""
         return Path(file_path).suffix.lower()
     
     @staticmethod
     def is_supported_file(file_path: str, supported_extensions: Set[str]) -> bool:
-        """
-        Verifica se arquivo tem extensão suportada
-        
-        Args:
-            file_path: Caminho do arquivo
-            supported_extensions: Conjunto de extensões suportadas
-            
-        Returns:
-            True se suportado
-        """
+        """Verifica se extensão é suportada."""
         extension = FileUtils.get_file_extension(file_path)
         return extension in supported_extensions
     
     @staticmethod
     def sanitize_filename(filename: str) -> str:
-        """
-        Sanitiza nome de arquivo removendo caracteres inválidos
-        
-        Args:
-            filename: Nome original
-            
-        Returns:
-            Nome sanitizado
-        """
+        """Sanitiza nome de arquivo."""
         # Remover caracteres não permitidos
         invalid_chars = '<>:"/\\|?*'
         for char in invalid_chars:
@@ -324,20 +242,11 @@ class FileUtils:
 
 
 class DataStructureUtils:
-    """Utilitários para estruturas de dados"""
+    """Utilitários de estrutura de dados."""
     
     @staticmethod
     def deep_merge_dicts(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Faz merge profundo de dicionários
-        
-        Args:
-            dict1: Dicionário base
-            dict2: Dicionário a ser mesclado
-            
-        Returns:
-            Dicionário mesclado
-        """
+        """Merge profundo de dicionários."""
         result = dict1.copy()
         
         for key, value in dict2.items():
@@ -350,15 +259,7 @@ class DataStructureUtils:
     
     @staticmethod
     def flatten_list(nested_list: List[Any]) -> List[Any]:
-        """
-        Achata lista aninhada
-        
-        Args:
-            nested_list: Lista aninhada
-            
-        Returns:
-            Lista achatada
-        """
+        """Achata lista aninhada."""
         result = []
         
         for item in nested_list:
@@ -371,15 +272,7 @@ class DataStructureUtils:
     
     @staticmethod
     def remove_duplicates_preserve_order(items: List[Any]) -> List[Any]:
-        """
-        Remove duplicatas preservando ordem
-        
-        Args:
-            items: Lista com possíveis duplicatas
-            
-        Returns:
-            Lista sem duplicatas
-        """
+        """Remove duplicatas preservando ordem."""
         seen = set()
         result = []
         
@@ -392,7 +285,7 @@ class DataStructureUtils:
 
 
 class MathUtils:
-    """Utilitários matemáticos"""
+    """Utilitários matemáticos."""
     
     @staticmethod
     def calculate_complexity_score(
@@ -402,19 +295,7 @@ class MathUtils:
         conditionals: int,
         nesting_level: int
     ) -> int:
-        """
-        Calcula score de complexidade
-        
-        Args:
-            variables: Número de variáveis
-            operations: Número de operações
-            functions: Número de funções
-            conditionals: Número de condicionais
-            nesting_level: Nível de aninhamento
-            
-        Returns:
-            Score de complexidade
-        """
+        """Calcula score de complexidade."""
         return (
             variables +
             operations * 2 +
@@ -425,17 +306,7 @@ class MathUtils:
     
     @staticmethod
     def normalize_score(score: float, min_val: float = 0, max_val: float = 100) -> float:
-        """
-        Normaliza score para faixa específica
-        
-        Args:
-            score: Score original
-            min_val: Valor mínimo da faixa
-            max_val: Valor máximo da faixa
-            
-        Returns:
-            Score normalizado
-        """
+        """Normaliza score."""
         if max_val <= min_val:
             return min_val
         

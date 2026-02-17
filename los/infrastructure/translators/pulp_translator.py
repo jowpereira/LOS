@@ -1,7 +1,4 @@
-"""
-🔄 PuLP Translator - Tradutor para biblioteca PuLP
-Converte expressões LOS v3 para código Python compatível com PuLP
-"""
+"""Tradutor para biblioteca PuLP."""
 
 from typing import Dict, List, Any, Optional
 import pulp
@@ -22,12 +19,9 @@ from ...shared.logging.logger import get_logger
 
 
 class PuLPTranslator(ITranslatorAdapter):
-    """
-    Tradutor especializado para biblioteca PuLP
-    Converte AST do LOS v3 para código Python/PuLP
-    """
+    """Tradutor especializado para biblioteca PuLP."""
     
-    __version__ = "3.1.0"  # F19
+    __version__ = "3.3.1"  # F19
     
     def __init__(self):
         self.target_language = "python"
@@ -37,10 +31,7 @@ class PuLPTranslator(ITranslatorAdapter):
     # --- ITranslatorAdapter compliance ---
     
     def translate(self, request: TranslationRequestDTO) -> TranslationResponseDTO:
-        """
-        M2: DTO-based translation — returns guidance to use translate_expression().
-        Kept for ITranslatorAdapter ABC compliance.
-        """
+        """DTO translation not supported."""
         return TranslationResponseDTO(
             source_text=request.expression_text or "",
             translated_code="# Use translate_expression() com objeto Expression parsed",
@@ -51,11 +42,10 @@ class PuLPTranslator(ITranslatorAdapter):
         )
             
     def translate_expression(self, expression: Expression) -> str:
-        """
-        F03/F06: Traduz entidade Expression (com AST) para código Python/PuLP completo.
-        Detecta objective sense ANTES de criar o problema.
-        """
+        """Traduz entidade Expression para código Python/PuLP."""
         try:
+            self.imported_datasets = [] # Reset imports for each translation
+            
             if not expression.syntax_tree:
                  if expression.original_text:
                      return f"# AST não disponível. Texto original: {expression.original_text}"
@@ -70,9 +60,11 @@ class PuLPTranslator(ITranslatorAdapter):
             code = []
             
             # Header
-            code.append("import pulp")
-            code.append("import pandas as pd")
-            code.append("import numpy as np")
+            # S03: Imports removed. Modules are injected via safe_globals in LOSModel.exec()
+            # code.append("import pulp")  <-- Removed to support sandbox
+            # code.append("import pandas as pd")
+            # code.append("import numpy as np")
+            code.append("# Imports provided by LOS Sandbox execution environment")
             code.append("")
             
             model_name = self._sanitize_name(ast.get('name', 'LOS_Model'))
@@ -94,16 +86,8 @@ class PuLPTranslator(ITranslatorAdapter):
             
             # Footer
             code.append("")
-            code.append("# --- Resolução ---")
-            code.append("prob.solve()")
             code.append("")
-            code.append("# --- Resultados ---")
-            code.append("print(f'Status: {pulp.LpStatus[prob.status]}')")
-            code.append("if prob.status == pulp.LpStatusOptimal:")
-            code.append("    print(f'Objective Value: {pulp.value(prob.objective)}')")
-            code.append("    for v in prob.variables():")
-            code.append("        if v.varValue is not None and abs(v.varValue) > 1e-5:")
-            code.append("            print(f'{v.name} = {v.varValue}')")
+            code.append("# O modelo 'prob' está pronto para ser resolvido.")
             
             full_code = "\n".join(code)
             expression.python_code = full_code
@@ -119,10 +103,7 @@ class PuLPTranslator(ITranslatorAdapter):
     # --- Internal helpers ---
 
     def _detect_sense(self, ast: Dict) -> str:
-        """
-        F06: Walk AST to find objective and detect sense (min/max).
-        Returns 'min' or 'max'. Default: 'min'.
-        """
+        """F06: Detecta sentido (min/max). Default: min."""
         if ast.get('type') == 'objective':
             sense = str(ast.get('sense', 'min')).lower()
             return 'max' if sense in ['max', 'maximize', 'maximizar'] else 'min'
@@ -136,7 +117,7 @@ class PuLPTranslator(ITranslatorAdapter):
         return 'min'
 
     def _sanitize_name(self, name: str) -> str:
-        """Sanitiza nomes para evitar code injection"""
+        """Sanitiza nomes."""
         if not name: return ""
         clean = re.sub(r'[^a-zA-Z0-9_]', '', str(name))
         if not clean: return "var_unnamed"
@@ -161,7 +142,8 @@ class PuLPTranslator(ITranslatorAdapter):
             return str(node)
 
     def _visit_default(self, node):
-        return f"# TODO: Implement visitor for node type '{node.get('type')}'"
+        self._logger.warning(f"Nó AST desconhecido encontrado: {node.get('type')}")
+        return f"# AVISO: Nó '{node.get('type')}' não implementado na tradução"
 
     # --- Specific Visitors ---
 
@@ -175,47 +157,95 @@ class PuLPTranslator(ITranslatorAdapter):
             import os
             basename = os.path.splitext(os.path.basename(safe_path))[0]
             var_name = self._sanitize_name(basename)
-            return f"{var_name} = pd.read_csv('{safe_path}')"
+            
+            # Track imported dataset for auto-binding
+            if not hasattr(self, 'imported_datasets'): self.imported_datasets = []
+            self.imported_datasets.append(var_name)
+            
+            # Use data from _los_data if available (injected by DataBindingService)
+            # Fallback to pd.read_csv only if explicit path provided and not in data
+            return f"{var_name} = _los_data.get('{var_name}') if '{var_name}' in _los_data else pd.read_csv('{safe_path}')"
         return f"# Import não suportado: {safe_path}"
 
     def _visit_set(self, node):
         name = self._sanitize_name(node['name'])
         value = node.get('value')
         
-        if not value:
-            return f"{name} = [] # Set indefinido"
+        # Default value generation logic
+        default_val_code = "[]"
+        assignments = []
+
+        if value:
+            val_type = value.get('type')
             
-        val_type = value.get('type')
-        if val_type == 'set_literal':
-            elements = [self._visit_set_element(e) for e in value.get('elements', [])]
-            return f"{name} = [{', '.join(elements)}]"
-        elif val_type == 'set_range':
-            start = self._visit(value.get('start'))
-            end = self._visit(value.get('end'))
-            step = self._visit(value.get('step')) if 'step' in value else None
-            step_str = f", {step}" if step else ""
-            return f"{name} = list(range({start}, {end} + 1{step_str}))"
-        elif val_type == 'set_ref':
-            return f"{name} = {self._visit(value)}"
-        elif val_type == 'set_op':
-            return f"{name} = {self._visit_set_op(value)}"
-        elif val_type == 'set_filter':
-            source = self._sanitize_name(value.get('source'))
-            expr_node = value.get('expression')
-            iterator = self._visit(expr_node)
-            condition = value.get('condition')
-            cond_str = f" if {self._visit(condition)}" if condition else ""
-            return f"{name} = [{iterator} for {iterator} in {source}{cond_str}]"
+            if val_type == 'set_literal':
+                element_nodes = value.get('elements', [])
+                elements_code = [self._visit_set_element(e) for e in element_nodes]
+                
+                # Definir identificadores como variáveis Python para uso em restrições
+                for e in element_nodes:
+                    if isinstance(e, dict) and e.get('type') == 'var_ref':
+                       name_ref = self._sanitize_name(e['name'])
+                       assignments.append(f"{name_ref} = '{name_ref}'")
+                
+                default_val_code = f"[{', '.join(elements_code)}]"
+
+            elif val_type == 'set_range':
+                start = self._visit(value.get('start'))
+                end = self._visit(value.get('end'))
+                step = self._visit(value.get('step')) if 'step' in value else None
+                step_str = f", {step}" if step else ""
+                default_val_code = f"list(range({start}, {end} + 1{step_str}))"
+
+            elif val_type == 'set_ref':
+                default_val_code = self._visit(value)
+
+            elif val_type == 'set_op':
+                default_val_code = self._visit_set_op(value)
+
+            elif val_type == 'set_filter':
+                source = self._sanitize_name(value.get('source'))
+                expr_node = value.get('expression')
+                iterator = self._visit(expr_node)
+                condition = value.get('condition')
+                cond_str = f" if {self._visit(condition)}" if condition else ""
+                default_val_code = f"[{iterator} for {iterator} in {source}{cond_str}]"
             
-        return f"{name} = [] # Tipo de set desconhecido: {val_type}"
+            else:
+                 default_val_code = f"[] # Tipo de set desconhecido: {val_type}"
+        
+        # F22: Auto-binding logic for Sets
+        lines = []
+        lines.extend(assignments)
+        
+        # 1. Try _los_data
+        lines.append(f"{name} = _los_data.get('{name}')")
+        
+        # 2. Try imported datasets if not found
+        if hasattr(self, 'imported_datasets'):
+             for df_name in self.imported_datasets:
+                 # Check dataset existence logic
+                 lines.append(f"if {name} is None:")
+                 lines.append(f"    try:") 
+                 lines.append(f"        if {df_name} is not None and '{name}' in {df_name}:")
+                 lines.append(f"            {name} = {df_name}['{name}'].unique().tolist()")
+                 lines.append(f"    except NameError:")
+                 lines.append(f"        pass")
+        
+        # 3. Fallback to default
+        lines.append(f"if {name} is None:")
+        lines.append(f"    {name} = {default_val_code}")
+
+        return "\n".join(lines)
 
     def _visit_set_element(self, node):
-        """Helper to handle set elements, quoting strings/identifiers"""
+        """Helper para elementos de conjunto."""
         if isinstance(node, dict):
             if node['type'] == 'var_ref':
                 return f"'{node['name']}'"
             elif node['type'] == 'string':
-                return f"'{node['value']}'"
+                # F20: Use repr()
+                return repr(node['value'])
             return self._visit(node)
         return str(node)
 
@@ -244,6 +274,8 @@ class PuLPTranslator(ITranslatorAdapter):
         value = node.get('value')
         indices = node.get('indices')
         
+        default_val_code = "{}" # Fallback empty
+        
         if value:
              val_str = self._visit(value)
              if indices:
@@ -251,15 +283,41 @@ class PuLPTranslator(ITranslatorAdapter):
                              for k, idx in enumerate(indices)]
                  
                  # Build nested dict comprehension from inside out
-                 # For [Plantas, Produtos]: {i_0: {i_1: 0 for i_1 in Produtos} for i_0 in Plantas}
-                 inner = val_str
-                 for loop_var, idx_set in reversed(idx_sets):
-                     inner = f"{{{loop_var}: {inner} for {loop_var} in {idx_set}}}"
-                 
-                 return f"{name} = {inner}"
-             return f"{name} = {val_str}"
-        return f"{name} = {{}} # Param undefined"
+                 default_val_code = inner
+             else:
+                 default_val_code = val_str
+        
+        # F22: Auto-binding logic
+        lines = []
+        found_flag = f"_found_{name}"
+        lines.append(f"{found_flag} = False")
+        
+        # 1. Try _los_data
+        lines.append(f"if '{name}' in _los_data:")
+        lines.append(f"    {name} = _los_data['{name}']")
+        lines.append(f"    {found_flag} = True")
+        
+        # 2. Try imported datasets
+        if hasattr(self, 'imported_datasets'):
+             for df_name in self.imported_datasets:
+                 lines.append(f"if not {found_flag}:")
+                 lines.append(f"    try:") 
+                 lines.append(f"        if {df_name} is not None and '{name}' in {df_name}:")
+                 if indices:
+                     # Assume columns match index names are used as indices
+                     indices_list = [self._sanitize_name(i) for i in indices]
+                     lines.append(f"            {name} = {df_name}.set_index({indices_list})['{name}'].to_dict()")
+                 else:
+                     lines.append(f"            {name} = {df_name}['{name}'].to_dict()")
+                 lines.append(f"            {found_flag} = True")
+                 lines.append(f"    except NameError:")
+                 lines.append(f"        pass")
 
+        # 3. Fallback
+        lines.append(f"if not {found_flag}:")
+        lines.append(f"    {name} = {default_val_code}")
+        
+        return "\n".join(lines)
     def _visit_var(self, node):
         name = self._sanitize_name(node['name'])
         var_type = node.get('var_type', 'continuous')
@@ -274,8 +332,7 @@ class PuLPTranslator(ITranslatorAdapter):
         
         # F07: Default bounds depend on category
         # Binary: [0, 1] (PuLP handles automatically)
-        # Integer/Continuous with no explicit bounds: lowBound=0 (standard LP convention)
-        # Documentation comment added for clarity
+        # Integer/Continuous with no explicit bounds: lowBound=0
         if cat == 'pulp.LpBinary':
             low = "0"
             up = "1"
@@ -301,7 +358,7 @@ class PuLPTranslator(ITranslatorAdapter):
             return (f"{name} = pulp.LpVariable.dicts('{name}', "
                     f"({idx_args}), lowBound={low}, upBound={up}, cat={cat})")
         else:
-            return (f"# F07: lowBound={low} (LP convention, use 'free' for unrestricted)\n"
+            return (f"# F07: lowBound={low} (LP convention)\n"
                     f"{name} = pulp.LpVariable('{name}', "
                     f"lowBound={low}, upBound={up}, cat={cat})")
 
@@ -358,25 +415,29 @@ class PuLPTranslator(ITranslatorAdapter):
         right = self._visit(node['right'])
         op = str(node['op'])
         
+        # F19: Map operators directly to Python/PuLP
         op_map = {
-            'le': '<=', 'leq': '<=', '<=': '<=',
-            'ge': '>=', 'geq': '>=', '>=': '>=',
-            'eq': '==', '==': '==', '=': '=='
+             'le': '<=', 'leq': '<=', '<=': '<=',
+             'ge': '>=', 'geq': '>=', '>=': '>=',
+             'eq': '==', '==': '==', '=': '==',
+             'ne': '!=', '!=': '!=', '<>': '!=',
+             'lt': '<', '<': '<',
+             'gt': '>', '>': '>'
         }
         
-        if op in ['<', 'lt']: py_op = '<='
-        elif op in ['>', 'gt']: py_op = '>='
-        elif op in ['!=', 'ne']: 
-             return f"# ERRO: Operador != não suportado em LP ({left} != {right})"
-        else:
-             py_op = op_map.get(op, '==')
-        
+        py_op = op_map.get(op)
+        if not py_op:
+             # Fallback
+             py_op = op
+
         return f"{left} {py_op} {right}"
 
     def _visit_binary_op(self, node):
         left = self._visit(node['left'])
         right = self._visit(node['right'])
         op = node['op']
+        if op == '^':
+             op = '**'
         return f"({left} {op} {right})"
     
     def _visit_var_ref(self, node):
@@ -458,4 +519,5 @@ class PuLPTranslator(ITranslatorAdapter):
         return str(val)
         
     def _visit_string(self, node):
-        return f"'{node.get('value')}'"
+        # S01: Use repr() to safely escape string literals and prevent injection
+        return repr(node.get('value'))

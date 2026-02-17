@@ -1,0 +1,8 @@
+
+import "integration_products.csv"
+set Products
+param Cost[Products]
+var x[Products] >= 0
+minimize: sum(x[p] * Cost[p] for p in Products)
+subject to:
+    c1: sum(x[p] for p in Products) >= 1

@@ -1,7 +1,4 @@
-"""
-🏛️ Expression Entity - Entidade Central do Domínio
-Representa uma expressão LOS completa com toda sua semântica
-"""
+"""Entidade Central do Domínio."""
 
 from dataclasses import dataclass, field
 from typing import Set, Dict, Any, Optional, List
@@ -20,15 +17,7 @@ from ...shared.errors.exceptions import ValidationError
 
 @dataclass
 class Expression:
-    """
-    Entidade central que representa uma expressão LOS analisada
-    
-    Implementa invariantes de negócio e encapsula comportamentos essenciais.
-    
-    NOTA F02: Validation is NOT performed in __post_init__.
-    Use Expression.create() factory for validated creation, or set fields
-    manually and call validate() explicitly.
-    """
+    """Entidade de expressão LOS analisada."""
     
     # Identificação única
     id: UUID = field(default_factory=uuid4)
@@ -54,24 +43,17 @@ class Expression:
     is_valid: bool = False
     validation_errors: List[str] = field(default_factory=list)
     
-    # F02: NO __post_init__ validation. Entity is a data holder.
-    # Validation is done explicitly via validate() or by UseCase logic.
+    # Validação explicita via validate() ou UseCase
     
     @classmethod
     def create(cls, original_text: str, **kwargs) -> 'Expression':
-        """
-        Factory method that creates and validates an Expression.
-        Use this when you want immediate validation.
-        """
+        """Cria e valida uma expressão imediatamente."""
         expr = cls(original_text=original_text, **kwargs)
         expr.validate()
         return expr
     
     def validate(self) -> bool:
-        """
-        Validates business invariants and sets is_valid + validation_errors.
-        Returns True if valid.
-        """
+        """Valida invariantes de negócio."""
         errors = []
         
         if not self.original_text.strip():
@@ -104,7 +86,7 @@ class Expression:
         return self.is_valid
     
     def add_variable(self, variable: Variable):
-        """Adiciona uma variável à expressão"""
+        """Adiciona variável."""
         if not isinstance(variable, Variable):
             raise ValidationError(
                 message="Objeto deve ser instância de Variable",
@@ -114,7 +96,7 @@ class Expression:
         self._update_complexity()
     
     def add_dataset_reference(self, reference: DatasetReference):
-        """Adiciona referência a dataset"""
+        """Adiciona referência a dataset."""
         if not isinstance(reference, DatasetReference):
             raise ValidationError(
                 message="Objeto deve ser instância de DatasetReference", 
@@ -123,7 +105,7 @@ class Expression:
         self.dataset_references.add(reference)
     
     def _update_complexity(self):
-        """Atualiza métricas de complexidade baseado nos componentes"""
+        """Atualiza métricas de complexidade."""
         self.complexity = ComplexityMetrics(
             variable_count=len(self.variables),
             nesting_level=self.complexity.nesting_level,
@@ -133,11 +115,11 @@ class Expression:
         )
     
     def get_variable_names(self) -> Set[str]:
-        """Retorna conjunto com nomes das variáveis"""
+        """Retorna nomes das variáveis."""
         return {var.name for var in self.variables}
     
     def get_dataset_names(self) -> Set[str]:
-        """Retorna conjunto com nomes dos datasets referenciados"""
+        """Retorna nomes dos datasets."""
         return {ref.dataset_name for ref in self.dataset_references}
     
     def is_objective(self) -> bool:
@@ -149,10 +131,10 @@ class Expression:
     def is_conditional(self) -> bool:
         return self.expression_type == ExpressionType.CONDITIONAL
     
-    # F11: Removed dead to_pulp_code(). Translation is handled by Translator.
+
     
     def to_dict(self) -> Dict[str, Any]:
-        """Converte entidade para dicionário para serialização"""
+        """Serializa para dicionário."""
         return {
             'id': str(self.id),
             'created_at': self.created_at.isoformat(),

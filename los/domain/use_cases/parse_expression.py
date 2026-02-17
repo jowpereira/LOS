@@ -1,7 +1,4 @@
-"""
-🎯 Parse Expression Use Case
-Caso de uso para análise e parsing de expressões LOS
-"""
+"""Caso de uso de parsing."""
 
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
@@ -18,7 +15,7 @@ from ...shared.logging.logger import get_logger
 
 @dataclass
 class ParseExpressionRequest:
-    """Request para parsing de expressão"""
+    """Request de parsing."""
     text: str
     validate: bool = True
     save_result: bool = False
@@ -26,7 +23,7 @@ class ParseExpressionRequest:
 
 @dataclass 
 class ParseExpressionResponse:
-    """Response do parsing de expressão"""
+    """Response de parsing."""
     expression: Expression
     success: bool
     errors: list
@@ -34,15 +31,7 @@ class ParseExpressionResponse:
 
 
 class ParseExpressionUseCase:
-    """
-    Use case para parsing de expressões LOS
-    
-    Responsabilidades:
-    - Coordenar o processo de parsing
-    - Aplicar regras de negócio
-    - Validar resultado
-    - Opcionalmente persistir
-    """
+    """Coordena o processo de parsing e validação."""
     
     def __init__(
         self,
@@ -56,15 +45,7 @@ class ParseExpressionUseCase:
         self._logger = get_logger('use_cases.parse_expression')
     
     def execute(self, request: ParseExpressionRequest) -> ParseExpressionResponse:
-        """
-        Executa o parsing de uma expressão (Síncrono)
-        
-        Args:
-            request: Dados da requisição
-            
-        Returns:
-            Resultado do parsing
-        """
+        """Executa parsing de expressão."""
         errors = []
         warnings = []
         
@@ -78,10 +59,8 @@ class ParseExpressionUseCase:
                     field="text"
                 )
             
-            # 1. Parsing Real
-            # O parser agora é a fonte da verdade sobre a estrutura
+            # Parsing Real
             try:
-                # Agora síncrono
                 parse_result = self._parser.parse(request.text)
             except Exception as e:
                 # Se falhar no parsing, não podemos prosseguir
@@ -99,19 +78,19 @@ class ParseExpressionUseCase:
                     warnings=warnings
                 )
 
-            # 2. Criar Entidade com dados do parser
+            # Criar Entidade
             expression = Expression(original_text=request.text.strip())
             
             # Mapear resultado do parser para a entidade
             self._map_parser_result_to_entity(expression, parse_result)
             
-            # 3. Validação (F02: Single source of truth via Expression.validate())
+            # Validação
             if request.validate:
                 expression.validate()
                 if not expression.is_valid:
                     errors.extend(expression.validation_errors)
 
-            # 4. Persistência
+            # Persistência
             if request.save_result and expression.is_valid:
                 result = self._expression_repo.save(expression)
                 expression.id = result.id
@@ -162,7 +141,7 @@ class ParseExpressionUseCase:
             )
 
     def _map_parser_result_to_entity(self, expression: Expression, parse_result: Dict[str, Any]):
-        """Popula a entidade Expression com dados do parser"""
+        """Popula a entidade Expression com dados do parser."""
         
         parsed_data = parse_result.get('parsed_result', {})
         expression.syntax_tree = parsed_data
@@ -199,5 +178,3 @@ class ParseExpressionUseCase:
              expression.complexity = comp_data
         elif comp_data and isinstance(comp_data, dict):
              expression.complexity = ComplexityMetrics(**comp_data)
-        
-        # F02: No validation here — UseCase calls expression.validate() explicitly

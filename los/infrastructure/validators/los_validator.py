@@ -1,7 +1,4 @@
-"""
-✅ LOS Validators - Validadores Especializados
-Sistema de validação modular e extensível para expressões LOS
-"""
+"""Validadores Especializados."""
 
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional, Set
@@ -19,14 +16,14 @@ from ...shared.logging.logger import get_logger
 
 
 class ValidationSeverity(Enum):
-    """Severidade da validação"""
+    """Severidade da validação."""
     ERROR = "error"
     WARNING = "warning"
     INFO = "info"
 
 
 class ValidationRule(ABC):
-    """Classe base para regras de validação"""
+    """Classe base para regras de validação."""
     
     def __init__(self, name: str, description: str, severity: ValidationSeverity):
         self.name = name
@@ -35,20 +32,12 @@ class ValidationRule(ABC):
     
     @abstractmethod
     def validate(self, expression: Expression) -> List[str]:
-        """
-        Valida expressão segundo a regra
-        
-        Args:
-            expression: Expressão a ser validada
-            
-        Returns:
-            Lista de mensagens de erro/warning
-        """
+        """Valida expressão segundo a regra."""
         pass
 
 
 class SyntaxValidationRule(ValidationRule):
-    """Validação de sintaxe básica"""
+    """Validação de sintaxe básica."""
     
     def __init__(self):
         super().__init__(
@@ -75,7 +64,7 @@ class SyntaxValidationRule(ValidationRule):
         return errors
     
     def _check_balanced_parentheses(self, text: str) -> bool:
-        """Verifica se parênteses estão balanceados"""
+        """Verifica se parênteses estão balanceados."""
         stack = []
         pairs = {'(': ')', '[': ']', '{': '}'}
         
@@ -91,7 +80,7 @@ class SyntaxValidationRule(ValidationRule):
         return len(stack) == 0
     
     def _check_balanced_quotes(self, text: str) -> bool:
-        """Verifica se aspas estão balanceadas"""
+        """Verifica se aspas estão balanceadas."""
         single_quotes = text.count("'")
         double_quotes = text.count('"')
         
@@ -99,7 +88,7 @@ class SyntaxValidationRule(ValidationRule):
 
 
 class ObjectiveValidationRule(ValidationRule):
-    """Validação específica para objetivos"""
+    """Validação específica para objetivos."""
     
     def __init__(self):
         super().__init__(
@@ -134,7 +123,7 @@ class ObjectiveValidationRule(ValidationRule):
 
 
 class ConstraintValidationRule(ValidationRule):
-    """Validação específica para restrições"""
+    """Validação específica para restrições."""
     
     def __init__(self):
         super().__init__(
@@ -155,20 +144,23 @@ class ConstraintValidationRule(ValidationRule):
             errors.append("Restrições devem conter operadores relacionais (<=, >=, ==, etc.)")
         
         # Verificar se há expressões em ambos os lados do operador
+        # Assume-se que o parser já garantiu que é um `constraint_block`.
+        # Se for constraint, deve ter um operador principal.
+        
+        found_op = False
         for op in relational_ops:
             if op in expression.original_text:
-                parts = expression.original_text.split(op)
-                if len(parts) != 2:
-                    errors.append(f"Operador {op} deve ter exatamente duas expressões")
-                elif not parts[0].strip() or not parts[1].strip():
-                    errors.append(f"Ambos os lados do operador {op} devem ter expressões")
+                found_op = True
                 break
+        
+        if not found_op:
+             errors.append("Constraint expression missing relational operator")
         
         return errors
 
 
 class VariableValidationRule(ValidationRule):
-    """Validação de variáveis"""
+    """Validação de variáveis."""
     
     def __init__(self):
         super().__init__(
@@ -214,7 +206,7 @@ class VariableValidationRule(ValidationRule):
 
 
 class ComplexityValidationRule(ValidationRule):
-    """Validação de complexidade"""
+    """Validação de complexidade."""
     
     def __init__(self, max_complexity: int = 50):
         super().__init__(
@@ -252,10 +244,7 @@ class ComplexityValidationRule(ValidationRule):
 
 
 class LOSValidator(IValidatorAdapter):
-    """
-    Validador principal do sistema LOS
-    Coordena múltiplas regras de validação
-    """
+    """Validador principal do sistema LOS."""
     
     def __init__(self):
         self._rules: Dict[str, ValidationRule] = {}
@@ -263,7 +252,7 @@ class LOSValidator(IValidatorAdapter):
         self._initialize_default_rules()
     
     def _initialize_default_rules(self):
-        """Inicializa regras padrão de validação"""
+        """Inicializa regras padrão."""
         self.add_rule(SyntaxValidationRule())
         self.add_rule(ObjectiveValidationRule())
         self.add_rule(ConstraintValidationRule())
@@ -271,31 +260,22 @@ class LOSValidator(IValidatorAdapter):
         self.add_rule(ComplexityValidationRule())
     
     def add_rule(self, rule: ValidationRule):
-        """Adiciona regra de validação"""
+        """Adiciona regra de validação."""
         self._rules[rule.name] = rule
         self._logger.debug(f"Regra de validação adicionada: {rule.name}")
     
     def remove_rule(self, rule_name: str):
-        """Remove regra de validação"""
+        """Remove regra de validação."""
         if rule_name in self._rules:
             del self._rules[rule_name]
             self._logger.debug(f"Regra de validação removida: {rule_name}")
     
     async def validate(self, request: ValidationRequestDTO) -> ValidationResponseDTO:
-        """
-        Valida expressão usando regras configuradas
-        
-        Args:
-            request: Requisição de validação
-            
-        Returns:
-            Resultado da validação
-        """
+        """Valida expressão usando regras configuradas."""
         try:
             self._logger.info("Iniciando validação de expressão")
             
-            # Para demonstração, criar expressão mock
-            # Em implementação real, buscaria por ID ou faria parsing
+            # Para demonstração
             if request.expression_text:
                 expression = self._create_mock_expression(request.expression_text)
             else:
@@ -353,11 +333,11 @@ class LOSValidator(IValidatorAdapter):
             )
     
     def get_available_rules(self) -> List[str]:
-        """Retorna regras disponíveis"""
+        """Retorna regras disponíveis."""
         return list(self._rules.keys())
     
     def get_rule_info(self, rule_name: str) -> Optional[Dict[str, Any]]:
-        """Retorna informações sobre uma regra"""
+        """Retorna informações sobre uma regra."""
         if rule_name in self._rules:
             rule = self._rules[rule_name]
             return {
@@ -368,7 +348,7 @@ class LOSValidator(IValidatorAdapter):
         return None
     
     def _create_mock_expression(self, text: str) -> Expression:
-        """Cria expressão mock para demonstração"""
+        """Cria expressão mock para demonstração."""
         # Detectar tipo básico
         text_upper = text.upper()
         

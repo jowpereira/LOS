@@ -3,7 +3,7 @@
 Arquitetura modular baseada em Clean Architecture
 """
 
-__version__ = "3.2.0"
+__version__ = "3.3.1"
 __author__ = "Jonathan Pereira"
 __email__ = "lethanconsultoria@gmail.com"
 
@@ -11,44 +11,38 @@ __email__ = "lethanconsultoria@gmail.com"
 # PUBLIC API
 # ═══════════════════════════════════════════════════════════════════
 
+from typing import Any, Dict, Optional
+
 from .application.compiler import compile_model
 from .domain.entities.los_model import LOSModel
 from .domain.entities.los_result import LOSResult
 
 
-def compile(source, data=None):
+def compile(source: str, data: Optional[Dict[str, Any]] = None) -> LOSModel:
     """
-    Compila um modelo LOS a partir de texto ou caminho de arquivo.
-
+    Compila um modelo LOS.
+    
     Args:
-        source: Texto LOS ou caminho para .los file
-        data: Dicionário de DataFrames (reservado Phase 2)
-
+        source: Texto do modelo ou caminho para arquivo .los
+        data: Dicionário de dados (DataFrames, dicts) para preencher parâmetros
+        
     Returns:
-        LOSModel compilado, pronto para .solve()
-
-    Example:
-        >>> model = los.compile("min: x\\nst:\\n  c1: x >= 5\\nvar x >= 0")
-        >>> model = los.compile("modelos/supply_chain_network.los")
+        LOSModel pronto para execução
     """
     return compile_model(source, data)
 
 
-def solve(source, data=None, **kwargs):
+def solve(source: str, data: Optional[Dict[str, Any]] = None, **kwargs) -> LOSResult:
     """
-    Atalho: compila e resolve em um passo.
-
+    Compila e resolve um modelo LOS em um passo.
+    
     Args:
-        source: Texto LOS ou caminho para .los file
-        data: Dicionário de DataFrames (reservado Phase 2)
-        **kwargs: Argumentos passados para LOSModel.solve()
-
+        source: Texto do modelo ou caminho para arquivo .los
+        data: Dados para preencher parâmetros
+        **kwargs: Argumentos para o solver (time_limit, msg, etc)
+        
     Returns:
-        LOSResult com status, objective, variables, time
-
-    Example:
-        >>> result = los.solve("min: x\\nst:\\n  c1: x >= 5\\nvar x >= 0")
-        >>> print(result.objective)  # 5.0
+        LOSResult com a solução
     """
     return compile_model(source, data).solve(**kwargs)
 

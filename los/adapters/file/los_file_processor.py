@@ -1,7 +1,4 @@
-"""
-📂 File Processor - Processador de Arquivos LOS
-Adaptador para processamento de arquivos .los com suporte a múltiplos formatos
-"""
+"""Adaptador para processamento de arquivos."""
 
 import asyncio
 import csv
@@ -20,26 +17,14 @@ from ...shared.logging.logger import get_logger
 
 
 class LOSFileProcessor(IFileAdapter):
-    """
-    Processador de arquivos para sistema LOS
-    Suporta .los, .txt, .csv e outros formatos
-    """
+    """Processador de arquivos (los, txt, csv, json)."""
     
     def __init__(self):
         self._logger = get_logger('adapters.file.los_processor')
         self._supported_extensions = {'.los', '.txt', '.csv', '.json'}
     
     async def read_file(self, file_path: str, encoding: str = "utf-8") -> str:
-        """
-        Lê conteúdo de arquivo
-        
-        Args:
-            file_path: Caminho do arquivo
-            encoding: Codificação do arquivo
-            
-        Returns:
-            Conteúdo do arquivo
-        """
+        """Lê conteúdo de arquivo."""
         try:
             path = Path(file_path)
             
@@ -52,7 +37,6 @@ class LOSFileProcessor(IFileAdapter):
             
             self._logger.info(f"Lendo arquivo: {file_path}")
             
-            # Verificar extensão
             if path.suffix.lower() not in self._supported_extensions:
                 self._logger.warning(f"Extensão {path.suffix} pode não ser suportada")
             
@@ -91,21 +75,10 @@ class LOSFileProcessor(IFileAdapter):
         content: str, 
         encoding: str = "utf-8"
     ) -> bool:
-        """
-        Escreve conteúdo em arquivo
-        
-        Args:
-            file_path: Caminho do arquivo
-            content: Conteúdo a ser escrito
-            encoding: Codificação do arquivo
-            
-        Returns:
-            True se escrito com sucesso
-        """
+        """Escreve conteúdo em arquivo."""
         try:
             path = Path(file_path)
             
-            # Criar diretórios se necessário
             path.parent.mkdir(parents=True, exist_ok=True)
             
             self._logger.info(f"Escrevendo arquivo: {file_path}")
@@ -132,15 +105,7 @@ class LOSFileProcessor(IFileAdapter):
             )
     
     async def file_exists(self, file_path: str) -> bool:
-        """
-        Verifica se arquivo existe
-        
-        Args:
-            file_path: Caminho do arquivo
-            
-        Returns:
-            True se arquivo existe
-        """
+        """Verifica se arquivo existe."""
         return Path(file_path).exists()
     
     async def process_los_file(
@@ -148,16 +113,7 @@ class LOSFileProcessor(IFileAdapter):
         file_path: str, 
         encoding: str = "utf-8"
     ) -> Tuple[List[str], List[str]]:
-        """
-        Processa arquivo .los específico
-        
-        Args:
-            file_path: Caminho do arquivo .los
-            encoding: Codificação do arquivo
-            
-        Returns:
-            Tupla com (expressões_válidas, erros)
-        """
+        """Processa arquivo .los específico. Retorna (expressões, erros)."""
         try:
             content = await self.read_file(file_path, encoding)
             
@@ -167,15 +123,12 @@ class LOSFileProcessor(IFileAdapter):
             for line_num, line in enumerate(content.split('\n'), 1):
                 line = line.strip()
                 
-                # Pular linhas de comentário e documentação
                 if self._should_skip_line(line):
                     continue
                 
-                # Validar linha como expressão LOS
                 if self._is_valid_los_expression(line):
                     expressions.append(line)
                 else:
-                    # Não é erro crítico, apenas não é expressão LOS
                     self._logger.debug(f"Linha {line_num} não é expressão LOS: {line[:50]}...")
             
             self._logger.info(f"Arquivo processado: {len(expressions)} expressões encontradas")
@@ -193,17 +146,7 @@ class LOSFileProcessor(IFileAdapter):
         output_path: str,
         format_type: str = "json"
     ) -> bool:
-        """
-        Exporta resultados em formato específico
-        
-        Args:
-            results: Lista de resultados
-            output_path: Caminho de saída
-            format_type: Formato (json, csv, txt)
-            
-        Returns:
-            True se exportado com sucesso
-        """
+        """Exporta resultados em formato específico (json, csv, txt)."""
         try:
             path = Path(output_path)
             
@@ -239,17 +182,7 @@ class LOSFileProcessor(IFileAdapter):
         pattern: str = "*.los",
         recursive: bool = False
     ) -> Dict[str, Any]:
-        """
-        Processa todos os arquivos de um diretório
-        
-        Args:
-            directory_path: Caminho do diretório
-            pattern: Padrão de arquivos (*.los)
-            recursive: Buscar recursivamente
-            
-        Returns:
-            Resumo do processamento
-        """
+        """Processa todos os arquivos de um diretório."""
         try:
             directory = Path(directory_path)
             
@@ -260,7 +193,6 @@ class LOSFileProcessor(IFileAdapter):
                     operation="read"
                 )
             
-            # Buscar arquivos
             if recursive:
                 files = list(directory.rglob(pattern))
             else:
@@ -324,7 +256,7 @@ class LOSFileProcessor(IFileAdapter):
             )
     
     def _should_skip_line(self, line: str) -> bool:
-        """Verifica se linha deve ser pulada"""
+        """Verifica se linha deve ser ignorada (comentário, markdown)."""
         if not line:
             return True
         
@@ -352,37 +284,32 @@ class LOSFileProcessor(IFileAdapter):
         return False
     
     def _is_valid_los_expression(self, line: str) -> bool:
-        """Verifica se linha parece ser expressão LOS válida"""
+        """Verifica se linha parece ser expressão LOS válida."""
         if not line:
             return False
         
-        # Indicadores de expressões LOS
         los_keywords = [
             'MINIMIZAR:', 'MAXIMIZAR:', 'SOMA DE', 'PARA CADA',
             'SE ', ' ENTAO ', ' SENAO '
         ]
         
-        # Operadores relacionais
         relational_ops = ['<=', '>=', '==', '!=', '<', '>', '=']
         
         line_upper = line.upper()
         
-        # Verificar palavras-chave LOS
         if any(keyword in line_upper for keyword in los_keywords):
             return True
         
-        # Verificar operadores relacionais (possível restrição)
         if any(op in line for op in relational_ops):
             return True
         
-        # Expressões matemáticas simples (contém variáveis)
         if any(char.isalpha() for char in line) and any(op in line for op in ['+', '-', '*', '/']):
             return True
         
         return False
     
     def _convert_to_csv(self, results: List[Dict[str, Any]]) -> str:
-        """Converte resultados para formato CSV"""
+        """Converte resultados para CSV."""
         if not results:
             return ""
         
@@ -390,17 +317,14 @@ class LOSFileProcessor(IFileAdapter):
         output = io.StringIO()
         writer = csv.writer(output)
         
-        # Cabeçalho
         if results:
             headers = results[0].keys()
             writer.writerow(headers)
             
-            # Dados
             for result in results:
                 row = []
                 for key in headers:
                     value = result.get(key, "")
-                    # Converter listas/dicts para string
                     if isinstance(value, (list, dict)):
                         value = json.dumps(value, ensure_ascii=False)
                     row.append(str(value))
@@ -409,7 +333,7 @@ class LOSFileProcessor(IFileAdapter):
         return output.getvalue()
     
     def _convert_to_text(self, results: List[Dict[str, Any]]) -> str:
-        """Converte resultados para formato texto"""
+        """Converte resultados para texto simples."""
         lines = []
         lines.append("# Relatório de Processamento LOS")
         lines.append("=" * 50)

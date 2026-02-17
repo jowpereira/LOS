@@ -1,7 +1,4 @@
-"""
-📦 In-Memory Repository Implementations
-Concrete repository implementations for testing and development
-"""
+"""Repositórios em memória para testes."""
 
 from typing import Dict, List, Optional
 from uuid import UUID, uuid4
@@ -11,10 +8,7 @@ from ...domain.repositories.interfaces import IExpressionRepository, IGrammarRep
 
 
 class InMemoryExpressionRepository(IExpressionRepository):
-    """
-    F15: Concrete in-memory expression repository.
-    Suitable for testing, prototyping, and single-session usage.
-    """
+    """Repositório de expressões em memória."""
     
     def __init__(self):
         self._store: Dict[UUID, Expression] = {}
@@ -52,10 +46,7 @@ class InMemoryExpressionRepository(IExpressionRepository):
 
 
 class InMemoryGrammarRepository(IGrammarRepository):
-    """
-    Concrete in-memory grammar repository.
-    Loads grammar from filesystem on first call, caches in memory.
-    """
+    """Repositório de gramáticas em memória."""
     
     def __init__(self, grammar_dir: Optional[str] = None):
         self._grammars: Dict[str, str] = {}

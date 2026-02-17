@@ -1,7 +1,4 @@
-"""
-🎯 Expression Application Service
-Serviço de aplicação principal para operações com expressões LOS
-"""
+"""Expression Application Service."""
 
 import time
 import re
@@ -43,14 +40,7 @@ from ...shared.logging.logger import get_logger
 
 
 class ExpressionService:
-    """
-    Serviço de aplicação para operações com expressões LOS
-    
-    Coordena use cases, adaptadores e repositórios para fornecer
-    API unificada para as camadas superiores.
-    
-    Nota: Implementação síncrona (v3)
-    """
+    """Coordena operações com expressões LOS (Sync v3)."""
     
     def __init__(
         self,
@@ -74,19 +64,17 @@ class ExpressionService:
         self._parse_expression_uc = ParseExpressionUseCase(
             expression_repository, 
             grammar_repository,
-            parser_adapter # Injetando parser
+            parser_adapter
         )
         
         self._logger = get_logger('services.expression')
     
     def parse_expression(self, request: ExpressionRequestDTO) -> ExpressionResponseDTO:
-        """
-        Analisa uma expressão LOS
-        """
+        """Analisa uma expressão LOS."""
         try:
             self._logger.info(f"Iniciando análise de expressão: {request.text[:50]}...")
             
-            # Verificar cache se disponível
+            # Verificar cache
             cache_key = f"expression:{hash(request.text)}"
             if self._cache_adapter:
                 cached_result = self._cache_adapter.get(cache_key)
@@ -94,7 +82,7 @@ class ExpressionService:
                     self._logger.info("Resultado encontrado no cache")
                     return cached_result
             
-            # Executar use case (Síncrono)
+            # Executar use case
             uc_request = ParseExpressionRequest(
                 text=request.text,
                 validate=request.validate,
@@ -103,15 +91,12 @@ class ExpressionService:
             
             uc_response = self._parse_expression_uc.execute(uc_request)
             
-            # Fix R12/A08: Integrate Translator into Service
-            # Ensure python_code is generated if parsing was successful
+            # Integrar Translator
             if uc_response.success and uc_response.expression.is_valid:
                  try:
                      self._translator_adapter.translate_expression(uc_response.expression)
                  except Exception as e:
                      self._logger.error(f"Translation failed: {e}")
-                     # We append warning/error but don't fail the parse if structure is valid?
-                     # Ideally we want complete success.
                      uc_response.success = False
                      uc_response.errors.append(f"Translation Error: {str(e)}")
                      uc_response.expression.validation_errors.append(f"Translation Error: {str(e)}")
@@ -147,9 +132,7 @@ class ExpressionService:
             )
     
     def process_batch(self, request: BatchProcessRequestDTO) -> BatchProcessResponseDTO:
-        """
-        Processa múltiplas expressões em lote
-        """
+        """Processa múltiplas expressões em lote."""
         start_time = time.time()
         results = []
         global_errors = []
@@ -218,9 +201,7 @@ class ExpressionService:
             )
     
     def process_file(self, request: FileProcessRequestDTO) -> FileProcessResponseDTO:
-        """
-        Processa arquivo .los/.txt/.csv
-        """
+        """Processa arquivo .los/.txt/.csv."""
         if not self._file_adapter:
             raise BusinessRuleError(
                 message="Adaptador de arquivo não configurado",
@@ -230,7 +211,7 @@ class ExpressionService:
         try:
             self._logger.info(f"Processando arquivo: {request.file_path}")
             
-            # Verificar se arquivo existe (Sync)
+            # Verificar se arquivo existe
             if not self._file_adapter.file_exists(request.file_path):
                 raise FileError(
                     message=f"Arquivo não encontrado: {request.file_path}",
@@ -238,12 +219,12 @@ class ExpressionService:
                     operation="read"
                 )
             
-            # Ler conteúdo do arquivo (Sync)
+            # Ler conteúdo
             content = self._file_adapter.read_file(request.file_path, request.encoding)
             
             # TODO: Se for CSV, processar diferente. Por enquanto assume texto/los
             
-            # Extrair expressões (remover comentários e linhas vazias)
+            # Extrair expressões
             expressions = self._extract_expressions_from_content(content)
             
             # Processar expressões em lote
@@ -277,13 +258,11 @@ class ExpressionService:
             )
     
     def get_statistics(self) -> StatisticsResponseDTO:
-        """
-        Retorna estatísticas do sistema
-        """
+        """Retorna estatísticas do sistema."""
         try:
             self._logger.info("Compilando estatísticas do sistema")
             
-            # Buscar todas as expressões (Sync)
+            # Buscar todas as expressões
             all_expressions = self._expression_repo.find_all()
             
             # Calcular estatísticas
@@ -329,7 +308,7 @@ class ExpressionService:
                 reverse=True
             )[:10]
             
-            # Taxa de sucesso (baseado em expressões válidas)
+            # Taxa de sucesso
             valid_expressions = sum(1 for expr in all_expressions if expr.is_valid)
             success_rate = (valid_expressions / total * 100) if total > 0 else 0
             
@@ -356,7 +335,7 @@ class ExpressionService:
             )
     
     def _convert_to_expression_dto(self, uc_response: ParseExpressionResponse) -> ExpressionResponseDTO:
-        """Converte resposta do use case para DTO"""
+        """Converte resposta do use case para DTO."""
         expr = uc_response.expression
         
         return ExpressionResponseDTO(
@@ -385,9 +364,8 @@ class ExpressionService:
         )
     
     def _extract_expressions_from_content(self, content: str) -> List[str]:
-        """Extrai expressões válidas de conteúdo de arquivo"""
-        # F04: Proper keyword detection — strip comments first, then check for
-        # LOS v3 model keywords using word boundaries to avoid substring matches.
+        """Extrai expressões válidas de conteúdo de arquivo."""
+        # LOS v3 detection
         
         # Strip comment lines before checking keywords
         code_lines = []

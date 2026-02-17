@@ -2,7 +2,7 @@
 // Gramática Lark para o parser LOS v3 (Bilíngue PT/EN)
 // Suporta a nova sintaxe simplificada e declarativa
 
-?start: statement+
+start: statement+
 
 ?statement: import_stmt
           | set_decl
@@ -134,13 +134,14 @@ SET_INTER: "&"
 SET_DIFF: "\\"
 SET_CROSS: "*"
 
-STRING: /'[^']*'/ | /"[^"]*"/
+// F17: Support escaped quotes in strings
+STRING: /"(?:[^"\\]|\\.)*"/ | /'(?:[^'\\]|\\.)*'/
 // F17: NUMBER does NOT match leading negative — handled by subtraction in expression grammar
 NUMBER: /\d+(\.\d+)?([eE][+-]?\d+)?/
 
 // Keywords for Sense
-MIN: "min" | "minimize" | "minimizar"
-MAX: "max" | "maximize" | "maximizar"
+MIN: "min" | "minimize" | "minimizar" | "MIN" | "MINIMIZE" | "MINIMIZAR"
+MAX: "max" | "maximize" | "maximizar" | "MAX" | "MAXIMIZE" | "MAXIMIZAR"
 
 // Keywords for Aggregation
 SUM: "sum" | "soma"

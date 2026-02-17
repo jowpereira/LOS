@@ -1,9 +1,7 @@
-"""
-🔧 LOS Parser - Implementação Lark v3
-Parser modularizado baseado em Lark para a linguagem LOS v3
-"""
+"""Parser modularizado baseado em Lark."""
 
 import re
+import ast
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
@@ -24,10 +22,7 @@ from ...shared.logging.logger import get_logger
 
 
 class LOSTransformer(Transformer):
-    """
-    Transformer Lark especializado para LOS v3
-    Converte árvore sintática em estruturas de dados
-    """
+    """Transformer Lark para LOS v3."""
     
     def __init__(self):
         super().__init__()
@@ -42,7 +37,7 @@ class LOSTransformer(Transformer):
         self._logger = get_logger('infrastructure.parser.transformer')
 
     def start(self, items):
-        """Retorna lista de statements processados"""
+        """Retorna lista de statements."""
         return {
             'type': 'model',
             'statements': items
@@ -50,7 +45,6 @@ class LOSTransformer(Transformer):
 
     # --- IMPORTS ---
     def import_model(self, items):
-        # items[0] is {'type': 'string', 'value': ...}
         path_node = items[0]
         path = path_node.get('value') if isinstance(path_node, dict) else str(path_node).strip('"\'')
         return {'type': 'import', 'path': path}
@@ -62,8 +56,6 @@ class LOSTransformer(Transformer):
         return {'type': 'set', 'name': name, 'value': value}
 
     def set_literal(self, items):
-        # set_elements returns a list, so items is [[exprs]]
-        # If set_elements matched nothing (empty set), items might be [None] or []
         elements = items[0] if items and items[0] else []
         return {'type': 'set_literal', 'elements': elements}
 
@@ -89,7 +81,7 @@ class LOSTransformer(Transformer):
         return str(items[0])
 
     def _extract_indices(self, indices_item):
-        """Extrai nomes dos índices de uma lista de expressões/tokens"""
+        """Extrai nomes dos índices."""
         if not indices_item:
             return None
         
@@ -193,8 +185,7 @@ class LOSTransformer(Transformer):
         loops = None
         
         idx = 0
-        # Robust check for optional name
-        # First item is name if it's a Token of type IDENTIFICADOR
+        # Verificar nome opcional
         first = items[0]
         if isinstance(first, Token) and first.type == 'IDENTIFICADOR':
              name = str(first)
@@ -234,11 +225,16 @@ class LOSTransformer(Transformer):
     def number(self, items): return {'type': 'number', 'value': float(items[0])}
     
     def string_literal(self, items): 
-        return {'type': 'string', 'value': str(items[0]).strip('"\'')}
+        # F21: Use ast.literal_eval
+        try:
+            val = ast.literal_eval(str(items[0]))
+        except:
+             # Fallback if literal_eval fails (e.g. unexpected format), though parser should guarantee string
+             val = str(items[0])[1:-1]
+        return {'type': 'string', 'value': val}
     
     def var_or_param(self, items):
         name = str(items[0])
-        # Can't distinguish var/param without symbol table here, assuming reference
         return {'type': 'var_ref', 'name': name}
         
     def dataset_coluna(self, items):
@@ -248,8 +244,7 @@ class LOSTransformer(Transformer):
 
     def indexed_var(self, items):
         name = str(items[0])
-        indices = self._extract_indices(items[1])
-        # Removed side-effect: do not register variables here, only in var_decl
+        indices = items[1]
         return {'type': 'indexed_var', 'name': name, 'indices': indices}
 
     def or_op(self, items): return {'type': 'logic_op', 'op': 'or', 'left': items[0], 'right': items[1]}
@@ -293,7 +288,7 @@ class LOSTransformer(Transformer):
         return {'type': 'function', 'name': 'max', 'args': args}
     
     def func_call(self, items):
-        # F09: Rewritten — items[0] is always IDENTIFICADOR Token, items[1] is always arguments list
+        # F09: items[0] is identifier, items[1] is args
         self.complexity_metrics['function_count'] += 1
         name = str(items[0])
         args = []
@@ -324,11 +319,9 @@ class LOSTransformer(Transformer):
 
 
 class LOSParser(IParserAdapter):
-    """
-    Parser principal para linguagem LOS v3
-    """
+    """Parser principal para linguagem LOS v3."""
     
-    __version__ = "3.1.0"  # F19: Version tracking
+    __version__ = "3.3.1"  # F19: Version tracking
     
     def __init__(self, grammar_file: Optional[str] = None):
         self._grammar_file = grammar_file or self._get_default_grammar_path()
@@ -361,7 +354,7 @@ class LOSParser(IParserAdapter):
             raise LOSParseError(f"Falha ao inicializar parser: {str(e)}", "", e)
     
     def parse(self, text: str) -> Dict[str, Any]:
-        # F01: Fresh transformer per call — eliminates ghost state from failed parses
+        # F01: Fresh transformer per call
         transformer = LOSTransformer()
         try:
             cleaned_text = text.strip()
