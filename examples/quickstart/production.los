@@ -1,0 +1,21 @@
+# Quickstart Example: Production Optimization
+# Minimize total production cost across factories.
+
+import "products.csv"
+import "factories.csv"
+
+set Products
+set Factories
+
+param Cost[Products]
+param Capacity[Factories]
+
+var qty[Products, Factories] >= 0
+
+minimize:
+    sum(qty[p,f] * Cost[p] for p in Products, f in Factories)
+
+subject to:
+    capacity_limit:
+        sum(qty[p,f] for p in Products) <= Capacity[f]
+        for f in Factories

@@ -1,31 +1,36 @@
-# Segurança no Projeto LOS
+# Security Policy
 
-Este documento descreve a política de segurança e as medidas de proteção implementadas no compilador LOS.
+This document describes the security model and protections implemented in the LOS compiler.
 
-## Modelo de Ameaça
+## Threat Model
 
-O LOS funciona como um **transpilador**: ele converte código `.los` (que é seguro por design) em código Python (que é poderoso e perigoso). 
+LOS works as a **transpiler**: it converts `.los` code (safe by design) into Python code (powerful and potentially dangerous).
 
-O principal vetor de ataque é a **Injeção de Código (RCE)** através de:
-1.  Strings maliciosas que tentam escapar das aspas no código gerado.
-2.  Chamadas de função não autorizadas (ex: `__import__('os')`) inseridas como expressões.
+The primary attack vector is **Code Injection (RCE)** through:
+1. Malicious strings attempting to escape quotes in generated code.
+2. Unauthorized function calls (e.g., `__import__('os')`) injected as expressions.
 
-## Medidas de Mitigação Implementadas
+## Mitigations
 
-### 1. Sandbox de Execução (`los_model.py`)
-Desde a versão 3.3.1, a execução do código gerado (via `exec()`) ocorre em um ambiente restrito ("sandbox").
-*   **Builtins Desativados**: O acesso a `open`, `__import__`, `eval`, `exec` e outros builtins perigosos é bloqueado.
-*   **Whitelist Estrita**: Apenas bibliotecas matemáticas e de otimização são permitidas (`pulp`, `pandas`, `numpy`, `math`).
+### 1. Execution Sandbox (`los_model.py`)
+All generated code runs inside a restricted `exec()` environment:
+- **Builtins disabled**: `open`, `__import__`, `eval`, `exec`, and all dangerous builtins are blocked.
+- **Strict whitelist**: Only math and optimization libraries are allowed: `pulp`, `pandas`, `numpy`, `math`.
+- **Safe builtins**: Only `range`, `list`, `set`, `dict`, `tuple`, `len`, `sum`, `min`, `max`, `abs`, `round`, `sorted`, `enumerate`, `zip`, `int`, `float`, `str`, `bool`, `print`.
 
-### 2. Escaping de Strings (`pulp_translator.py`)
-Todas as strings literais do modelo LOS são tratadas com `repr()` durante a tradução, garantindo que caracteres de escape (`'`, `"`, `\`) sejam neutralizados corretamente.
+### 2. String Escaping (`pulp_translator.py`)
+All string literals from the LOS model are processed with `repr()` during translation, ensuring that escape characters (`'`, `"`, `\`) are neutralized correctly.
 
-## Limitações
+### 3. Name Sanitization
+All identifiers (variable names, set names, parameter names) are sanitized with `re.sub(r'[^a-zA-Z0-9_]', '', name)`, preventing any special characters from reaching the generated code.
 
-*   **Não use com input não confiável**: Embora tenhamos endurecido a segurança, **nunca execute modelos LOS recebidos de fontes desconhecidas ou não confiáveis** sem auditoria prévia. Compiladores são alvos complexos e novas técnicas de bypass de sandbox podem surgir.
-*   **DoS (Denial of Service)**: O modelo ainda pode consumir recursos excessivos (CPU/RAM) se contiver loops gigantes ou matrizes enormes. Defina timeouts no solver (`time_limit`).
+## Limitations
 
-## Reportando Vulnerabilidades
+- **Untrusted input**: Although the sandbox is hardened, **never execute LOS models from unknown or untrusted sources** without prior audit. New sandbox bypass techniques may emerge.
+- **DoS (Denial of Service)**: Models can still consume excessive resources (CPU/RAM) with large loops or matrices. Use `time_limit` on the solver.
 
-Se você encontrar uma falha de segurança (ex: bypass do sandbox), por favor **NÃO** abra uma Issue pública.
-Envie um email diretamente para o mantenedor (contact@los-lang.org) ou reporte confidencialmente.
+## Reporting Vulnerabilities
+
+If you find a security flaw (e.g., sandbox bypass), please **DO NOT** open a public Issue.
+
+Report confidentially to: **lethanconsultoria@gmail.com**

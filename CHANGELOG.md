@@ -1,3 +1,4 @@
+# Changelog
 
 ## v3.3.1 - Mathematical Robustness & Core Stability
 ### 🛡️ Parser & Grammar
