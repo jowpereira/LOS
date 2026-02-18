@@ -1,6 +1,6 @@
-# 📘 LOS User Manual v3.3.2
+# 📘 LOS User Manual v3.3.3
 
-**Linear Optimization Specification (LOS)** is a domain-specific language for modeling mathematical optimization problems.
+**Language for Optimization Specification (LOS)** is a domain-specific language for modeling mathematical optimization problems.
 
 This manual serves as the definitive reference for the LOS language syntax and Python API.
 

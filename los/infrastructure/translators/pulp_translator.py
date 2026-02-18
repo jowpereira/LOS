@@ -21,7 +21,7 @@ from ...shared.logging.logger import get_logger
 class PuLPTranslator(ITranslatorAdapter):
     """Tradutor especializado para biblioteca PuLP."""
     
-    __version__ = "3.3.2"  # F19
+    __version__ = "3.3.3"  # F19
     
     def __init__(self):
         self.target_language = "python"

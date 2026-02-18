@@ -1,5 +1,12 @@
 # Changelog
 
+## v3.3.3 - Branding Correction
+### 🏷️ Naming & Messaging
+- **[FIX]** `Terminology`: Corrected project expansion to **Language for Optimization Specification** (was previously "Linear Optimization Specification" in some docs).
+- **[CHG]** `PyPI Republish`: Re-published as v3.3.3 to propagate description changes to PyPI index.
+
+---
+
 ## v3.3.2 - PyPI Re-publish & Metadata Update
 ### 📦 Package & Distribution
 - **[CHG]** `PyPI Republish`: Re-published as `los-lang` v3.3.2 (v3.3.1 filename was consumed by prior deletion; PyPI does not allow filename reuse).

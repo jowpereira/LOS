@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "los-lang"
-version = "3.3.2"
-description = "Write Math, Run Python. A Domain-Specific Language for Mathematical Optimization."
+version = "3.3.3"
+description = "Write Math, Run Python. A Language for Optimization Specification (LOS)."
 readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.9"

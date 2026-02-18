@@ -1,10 +1,10 @@
-# LosPy — Mathematical Optimization Specification
+# LOS — Language for Optimization Specification
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Security: Hardened](https://img.shields.io/badge/security-hardened-green.svg)](./SECURITY.md)
 
-**LOS** is a Domain-Specific Language (DSL) for mathematical optimization. It compiles human-readable model definitions into executable Python/PuLP code, keeping your business logic clean and your data pipeline separate.
+**LOS** is a **Language for Optimization Specification**. It compiles human-readable model definitions into executable Python/PuLP code, keeping your business logic clean and your data pipeline separate.
 
 > **"Write Math, Run Python."**
 
