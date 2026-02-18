@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "los-lang"
+name = "los"
 version = "3.3.1"
 description = "Write Math, Run Python. A Domain-Specific Language for Mathematical Optimization."
 readme = "README.md"
@@ -63,11 +63,11 @@ cli = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/jpereiramp/los-lang"
-Documentation = "https://github.com/jpereiramp/los-lang/blob/master/MANUAL.md"
-Repository = "https://github.com/jpereiramp/los-lang"
-Issues = "https://github.com/jpereiramp/los-lang/issues"
-Changelog = "https://github.com/jpereiramp/los-lang/blob/master/CHANGELOG.md"
+Homepage = "https://github.com/jowpereira/los"
+Documentation = "https://github.com/jowpereira/los/blob/master/MANUAL.md"
+Repository = "https://github.com/jowpereira/los"
+Issues = "https://github.com/jowpereira/los/issues"
+Changelog = "https://github.com/jowpereira/los/blob/master/CHANGELOG.md"
 
 [project.scripts]
 los = "los.adapters.cli.los_cli:main"

@@ -106,6 +106,10 @@ debug_*.py
 temp-todo/
 backup/
 .vscode/
+.agent/
+.build_venv/
+dist/
+PUBLISHING.md
 
 # Tests are included
 !tests/
