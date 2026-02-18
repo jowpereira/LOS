@@ -1,4 +1,4 @@
-# 📘 LOS User Manual v3.3.1
+# 📘 LOS User Manual v3.3.2
 
 **Linear Optimization Specification (LOS)** is a domain-specific language for modeling mathematical optimization problems.
 

@@ -3,24 +3,25 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "los"
-version = "3.3.1"
+name = "los-lang"
+version = "3.3.2"
 description = "Write Math, Run Python. A Domain-Specific Language for Mathematical Optimization."
 readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.9"
 authors = [
-    {name = "Jonathan Pereira", email = "lethanconsultoria@gmail.com"},
+    {name = "Jonathan Pereira"},
 ]
 keywords = [
     "optimization",
-    "linear-programming",
-    "dsl",
+    "mathematical-optimization",
     "operations-research",
-    "mathematical-modeling",
+    "modeling-language",
     "pulp",
     "solver",
     "milp",
+    "linear-programming",
+    "mixed-integer-programming",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

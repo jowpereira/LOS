@@ -321,7 +321,7 @@ class LOSTransformer(Transformer):
 class LOSParser(IParserAdapter):
     """Parser principal para linguagem LOS v3."""
     
-    __version__ = "3.3.1"  # F19: Version tracking
+    __version__ = "3.3.2"  # F19: Version tracking
     
     def __init__(self, grammar_file: Optional[str] = None):
         self._grammar_file = grammar_file or self._get_default_grammar_path()

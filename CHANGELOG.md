@@ -1,5 +1,14 @@
 # Changelog
 
+## v3.3.2 - PyPI Re-publish & Metadata Update
+### 📦 Package & Distribution
+- **[CHG]** `PyPI Republish`: Re-published as `los-lang` v3.3.2 (v3.3.1 filename was consumed by prior deletion; PyPI does not allow filename reuse).
+- **[CHG]** `Keywords`: Broadened from "linear-programming" to "mathematical-optimization", "operations-research", "modeling-language", "mixed-integer-programming".
+- **[CHG]** `README`: Updated installation instructions (`pip install los-lang`), repository URLs, and project title to "Mathematical Optimization Specification".
+- **[CHG]** `Description`: Scope clarified as "Mathematical Optimization" (not limited to Linear Programming).
+
+---
+
 ## v3.3.1 - Mathematical Robustness & Core Stability
 ### 🛡️ Parser & Grammar
 - **[FIX]** `String Literals`: Implemented `ast.literal_eval` to correctly parse escaped characters (e.g., Windows paths `C:\\Path`, nested quotes `\"`).

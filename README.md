@@ -1,4 +1,4 @@
-# LOS — Linear Optimization Specification
+# LosPy — Mathematical Optimization Specification
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
@@ -18,8 +18,8 @@ pip install los-lang
 
 Or install from source:
 ```bash
-git clone https://github.com/jpereiramp/los-lang.git
-cd los-lang
+git clone https://github.com/jowpereira/los.git
+cd los
 pip install -e .
 ```
 
