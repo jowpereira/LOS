@@ -21,7 +21,7 @@ from ...shared.logging.logger import get_logger
 class PuLPTranslator(ITranslatorAdapter):
     """Tradutor especializado para biblioteca PuLP."""
     
-    __version__ = "3.3.3"  # F19
+    __version__ = "3.3.5"  # F19
     
     def __init__(self):
         self.target_language = "python"
@@ -283,6 +283,9 @@ class PuLPTranslator(ITranslatorAdapter):
                              for k, idx in enumerate(indices)]
                  
                  # Build nested dict comprehension from inside out
+                 inner = val_str
+                 for i_var, s_var in reversed(idx_sets):
+                     inner = f"{{{i_var}: {inner} for {i_var} in {s_var}}}"
                  default_val_code = inner
              else:
                  default_val_code = val_str

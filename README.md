@@ -4,7 +4,7 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Security: Hardened](https://img.shields.io/badge/security-hardened-green.svg)](./SECURITY.md)
 
-**LOS** is a **Language for Optimization Specification**. It compiles human-readable model definitions into executable Python/PuLP code, keeping your business logic clean and your data pipeline separate.
+**LOS** is a **Language for Optimization Specification**. It compiles human-readable model definitions into executable Python code (currently using **PuLP** as the primary engine), keeping your business logic clean and your data pipeline separate.
 
 > **"Write Math, Run Python."**
 
@@ -86,6 +86,7 @@ if result.is_optimal:
 | **Security** | Sandboxed execution | Full Python access |
 | **Debug** | Inspect generated code (`model.code()`) | Black box |
 | **Solver** | CBC, GLPK, Gurobi, CPLEX (via PuLP) | Same |
+| **Backends** | PuLP (Pyomo planned) | N/A |
 
 ---
 
@@ -111,6 +112,7 @@ result = los.solve("model.los", data={"Products": df})
 | [User Manual](./MANUAL.md) | Full syntax reference and API guide |
 | [Security Policy](./SECURITY.md) | Sandbox details and threat model |
 | [Changelog](./CHANGELOG.md) | Version history |
+| [Backlog](./BACKLOG.md) | Roadmap and future features |
 | [Contributing](./CONTRIBUTING.md) | How to contribute |
 
 ---

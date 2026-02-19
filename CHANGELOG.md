@@ -1,5 +1,20 @@
 # Changelog
 
+## v3.3.5 - Documentation & Roadmap
+### 📚 Documentation
+- **[ADD]** `BACKLOG.md`: Added standardized project roadmap and future features list.
+- **[CHG]** `README.md`: Clarified current support for PuLP and future plans for Pyomo.
+- **[CHG]** `Manual`: Updated versioning and minor corrections.
+
+---
+
+## v3.3.4 - Stability Fix
+### 🐛 Bug Fixes
+- **[FIX]** `PuLPTranslator`: Resolved `NameError: name 'inner' is not defined` when translating indexed parameters with default values.
+- **[FIX]** `Nested Dicts`: Corrected the internal logic for nested dictionary comprehension generation.
+
+---
+
 ## v3.3.3 - Branding Correction
 ### 🏷️ Naming & Messaging
 - **[FIX]** `Terminology`: Corrected project expansion to **Language for Optimization Specification** (was previously "Linear Optimization Specification" in some docs).
