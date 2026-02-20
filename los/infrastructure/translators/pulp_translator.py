@@ -309,7 +309,16 @@ class PuLPTranslator(ITranslatorAdapter):
                  if indices:
                      # Assume columns match index names are used as indices
                      indices_list = [self._sanitize_name(i) for i in indices]
-                     lines.append(f"            {name} = {df_name}.set_index({indices_list})['{name}'].to_dict()")
+                     if len(indices_list) == 1:
+                         lines.append(f"            {name} = {df_name}.set_index({indices_list})['{name}'].to_dict()")
+                     else:
+                         lines.append(f"            _flat_{name} = {df_name}.set_index({indices_list})['{name}'].to_dict()")
+                         lines.append(f"            {name} = {{}}")
+                         lines.append(f"            for _k, _v in _flat_{name}.items():")
+                         lines.append(f"                _d = {name}")
+                         lines.append(f"                for _ki in _k[:-1]:")
+                         lines.append(f"                    _d = _d.setdefault(_ki, {{}})")
+                         lines.append(f"                _d[_k[-1]] = _v")
                  else:
                      lines.append(f"            {name} = {df_name}['{name}'].to_dict()")
                  lines.append(f"            {found_flag} = True")
