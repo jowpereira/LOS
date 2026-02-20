@@ -168,15 +168,40 @@ class DataBindingService:
         """Transforma DataFrame em dicionário aninhado, garantindo densidade se possível."""
         expected_levels = len(indices)
         
-        # Tenta setar índice se as colunas existirem
+        # Tenta setar índice se as colunas existirem, com busca fuzzy
         available_cols = set(df.columns)
-        indices_to_set = [idx for idx in indices if idx in available_cols]
         
-        if len(indices_to_set) > 0:
-            # Se encontrou todos ou alguns, seta.
-            # Se for parcial, depois verifica levels.
+        # Mapeamento de colunas do DataFrame (normalizado -> original)
+        # Normalização: lower() e strip() para garantir que pegamos a coluna real que existe no CSV
+        normalized_cols_map = {c.lower().strip(): c for c in available_cols}
+        
+        indices_to_set = []
+        
+        for idx in indices:
+            # 1. Busca exata (Prioridade absoluta)
+            if idx in available_cols:
+                indices_to_set.append(idx)
+                continue
+                
+            # 2. Busca fuzzy (case insensitive + strip)
+            # Só aceita se houver uma correspondência direta da versão normalizada.
+            # Não inventa dados, apenas corrige formatação (ex: " produto " -> "Produto")
+            idx_norm = idx.lower().strip()
+            if idx_norm in normalized_cols_map:
+                real_col_name = normalized_cols_map[idx_norm]
+                _logger.info(f"Coluna '{real_col_name}' mapeada para índice '{idx}' (Correção de formato: Case/Whitespace)")
+                # Renomeia a coluna no DF para o nome esperado pelo parâmetro
+                df.rename(columns={real_col_name: idx}, inplace=True)
+                indices_to_set.append(idx)
+                # Atualiza availables
+                available_cols = set(df.columns) 
+            # Se não achar, não faz nada. O sistema vai falhar mais a frente de forma segura se faltar índice.
+        
+        if indices_to_set:
             try:
                 df = df.set_index(indices_to_set)
+                # Se faltou algum índice, o df.index.nlevels será menor que len(indices)
+                # Isso será pego na validação posterior ou _process_series
             except Exception as e:
                 _logger.warning(f"Falha ao definir índice {indices_to_set} para parâmetro '{name}': {e}. Usando índice padrão.")
         

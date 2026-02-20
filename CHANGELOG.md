@@ -1,5 +1,13 @@
 # Changelog
 
+
+## v3.3.6 - Stable Data Binding
+### 🐛 Bug Fixes
+- **[FIX]** `DataBindingService`: Implemented fuzzy column matching (case-insensitive + whitespace stripping) to correctly load multi-indexed parameters from CSVs even when column names differ slightly (e.g., ` Stock ` vs `Stock`).
+- **[FIX]** `CSV Loading`: Prevents flat loading of multi-index parameters when column names have case or whitespace mismatches.
+
+---
+
 ## v3.3.5 - Documentation & Roadmap
 ### 📚 Documentation
 - **[ADD]** `BACKLOG.md`: Added standardized project roadmap and future features list.
