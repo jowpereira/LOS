@@ -3,7 +3,7 @@
 Arquitetura modular baseada em Clean Architecture
 """
 
-__version__ = "3.3.6"
+__version__ = "3.3.7"
 __author__ = "Jonathan Pereira"
 __email__ = "lethanconsultoria@gmail.com"
 
