@@ -136,7 +136,23 @@ if result.is_optimal:
     print(result.get_variable("qty", as_df=True))
 ```
 
-### 3.2 Advanced: Manual Data Binding
+### 3.2 Exporting to Standalone Python
+
+Sometimes you want to compile a `.los` model but run it elsewhere without needing the `los` compiler again. You can export the model to a complete, standalone Python script!
+
+```python
+import los
+
+# 1. Compile model
+model = los.compile_model("model.los")
+
+# 2. Export to a ready-to-use Python script
+model.export_python("my_solver_script.py")
+```
+
+This generates a standalone `.py` file that includes all required imports, the native PuLP model code, the solver trigger (`prob.solve()`), and print statements for the results. You can run this generated script in any Python environment where `pulp` and `pandas` are installed.
+
+### 3.3 Advanced: Manual Data Binding
 
 If you are building a web app or generating data on the fly in Python, you can inject DataFrames manually. This overrides imported data.
 

@@ -84,7 +84,7 @@ if result.is_optimal:
 | **Readability** | Whiteboard-like syntax | Python boilerplate |
 | **Data Binding** | Native CSV imports | Manual DataFrame wrangling |
 | **Security** | Sandboxed execution | Full Python access |
-| **Debug** | Inspect generated code (`model.code()`) | Black box |
+| **Debug** | Inspect generated code (`model.code()` or `model.export_python()`) | Black box |
 | **Solver** | CBC, GLPK, Gurobi, CPLEX (via PuLP) | Same |
 | **Backends** | PuLP (Pyomo planned) | N/A |
 
