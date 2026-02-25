@@ -175,7 +175,7 @@ LOS runs generated code in a **Sandboxed Environment**.
 *   **Blocked**: `open`, `__import__`, `eval`, `exec`.
 *   **Allowed**: Math functions, `pulp`, `pandas`, `numpy`.
 
-See [SECURITY.md](./SECURITY.md) for details.
+See [SECURITY.md](security.md) for details.
 
 ---
 
