@@ -1,0 +1,1015 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Language for Optimization Specification">
+      
+      
+        <meta name="author" content="Jonathan Pereira">
+      
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../security/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.2.7">
+    
+    
+      
+        <title>User Manual - LOS Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.046329b4.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.85d0ee34.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#los-user-manual-v335" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="LOS Documentation" class="md-header__button md-logo" aria-label="LOS Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LOS Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              User Manual
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/jowpereira/los" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jowpereira/los
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+    
+  
+  User Manual
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../security/" class="md-tabs__link">
+        
+  
+    
+  
+  Security Policy
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../changelog/" class="md-tabs__link">
+        
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../backlog/" class="md-tabs__link">
+        
+  
+    
+  
+  Backlog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../contributing/" class="md-tabs__link">
+        
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="LOS Documentation" class="md-nav__button md-logo" aria-label="LOS Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    LOS Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/jowpereira/los" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jowpereira/los
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    User Manual
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    User Manual
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-syntax-overview" class="md-nav__link">
+    1. Syntax Overview
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-model-structure" class="md-nav__link">
+    2. Model Structure
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Model Structure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-imports-the-power-way" class="md-nav__link">
+    2.1 Imports (The Power Way)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-sets" class="md-nav__link">
+    2.2 Sets
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-parameters" class="md-nav__link">
+    2.3 Parameters
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-variables" class="md-nav__link">
+    2.4 Variables
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-objective-function" class="md-nav__link">
+    2.5 Objective Function
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-constraints" class="md-nav__link">
+    2.6 Constraints
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-python-api-integration" class="md-nav__link">
+    3. Python API Integration
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Python API Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-basic-usage" class="md-nav__link">
+    3.1 Basic Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-exporting-to-standalone-python" class="md-nav__link">
+    3.2 Exporting to Standalone Python
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-advanced-manual-data-binding" class="md-nav__link">
+    3.3 Advanced: Manual Data Binding
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-security" class="md-nav__link">
+    4. Security
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-troubleshooting-common-errors" class="md-nav__link">
+    5. Troubleshooting Common Errors
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Troubleshooting Common Errors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parseerror-unexpected-token" class="md-nav__link">
+    ParseError: Unexpected token ...
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keyerror-x" class="md-nav__link">
+    KeyError: 'X'
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Security Policy
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changelog/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Changelog
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Backlog
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-syntax-overview" class="md-nav__link">
+    1. Syntax Overview
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-model-structure" class="md-nav__link">
+    2. Model Structure
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Model Structure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-imports-the-power-way" class="md-nav__link">
+    2.1 Imports (The Power Way)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-sets" class="md-nav__link">
+    2.2 Sets
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-parameters" class="md-nav__link">
+    2.3 Parameters
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-variables" class="md-nav__link">
+    2.4 Variables
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-objective-function" class="md-nav__link">
+    2.5 Objective Function
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-constraints" class="md-nav__link">
+    2.6 Constraints
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-python-api-integration" class="md-nav__link">
+    3. Python API Integration
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Python API Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-basic-usage" class="md-nav__link">
+    3.1 Basic Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-exporting-to-standalone-python" class="md-nav__link">
+    3.2 Exporting to Standalone Python
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-advanced-manual-data-binding" class="md-nav__link">
+    3.3 Advanced: Manual Data Binding
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-security" class="md-nav__link">
+    4. Security
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-troubleshooting-common-errors" class="md-nav__link">
+    5. Troubleshooting Common Errors
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Troubleshooting Common Errors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parseerror-unexpected-token" class="md-nav__link">
+    ParseError: Unexpected token ...
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keyerror-x" class="md-nav__link">
+    KeyError: 'X'
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="los-user-manual-v335">📘 LOS User Manual v3.3.5</h1>
+<p><strong>Language for Optimization Specification (LOS)</strong> is a domain-specific language for modeling mathematical optimization problems.</p>
+<p>This manual serves as the definitive reference for the LOS language syntax and Python API.</p>
+<hr />
+<h2 id="1-syntax-overview">1. Syntax Overview</h2>
+<p><strong>Important Rules:</strong>
+1.  <strong>Lowercase Keywords</strong>: LOS is strictly case-sensitive. Keywords like <code>set</code>, <code>var</code>, <code>minimize</code> must be lowercase.
+2.  <strong>Comments</strong>: Use <code>#</code> for comments.
+3.  <strong>Blocks</strong>: Indentation is not significant, but recommended for readability. Blocks (like constraints) use colons <code>:</code>.</p>
+<hr />
+<h2 id="2-model-structure">2. Model Structure</h2>
+<p>A valid LOS model consists of declarations in roughly this order:</p>
+<ol>
+<li><strong>Imports</strong> (Data Sources)</li>
+<li><strong>Sets</strong> (Indices)</li>
+<li><strong>Parameters</strong> (Data)</li>
+<li><strong>Variables</strong> (Decisions)</li>
+<li><strong>Objective</strong> (Goal)</li>
+<li><strong>Constraints</strong> (Rules)</li>
+</ol>
+<h3 id="21-imports-the-power-way">2.1 Imports (The Power Way)</h3>
+<p>Instead of passing data via Python, <strong>import it directly</strong>.</p>
+<pre><code class="language-los">import &quot;data/products.csv&quot;
+import &quot;data/factories.csv&quot;
+</code></pre>
+<p>The compiler will read the CSVs and make their columns available for Sets and Parameters.</p>
+<h3 id="22-sets">2.2 Sets</h3>
+<p>Sets define the dimensions of your problem.</p>
+<p><strong>Syntax:</strong></p>
+<pre><code class="language-los"># 1. Native Import (Recommended)
+# Automatically populated from the 'Products' column in any imported CSV.
+set Products
+
+# 2. Simple set literal
+set Colors = {&quot;Red&quot;, &quot;Green&quot;, &quot;Blue&quot;}
+
+# 3. Range set (inclusive)
+set Time = 1..12
+</code></pre>
+<h3 id="23-parameters">2.3 Parameters</h3>
+<p>Parameters hold the constant data values.</p>
+<p><strong>Syntax:</strong></p>
+<pre><code class="language-los"># 1. Native Import (Recommended)
+# Automatically populated from the 'Cost' column in any imported CSV.
+# Must declare index [Products] to validate size.
+param Cost[Products]
+
+# 2. Scalar parameter
+param MaxTotalCost = 1000
+
+# 3. Multi-index parameter (Matrix)
+# &quot;Distance from Factories to Customers&quot;
+param Distance[Factories, Customers]
+</code></pre>
+<h3 id="24-variables">2.4 Variables</h3>
+<p>Variables are the decisions the solver will make.</p>
+<p><strong>Syntax:</strong></p>
+<pre><code class="language-los"># Continuous variable (default) with bounds
+var qty[Products] &gt;= 0
+
+# Binary variable (0 or 1)
+var is_active[Factories] bin
+
+# Integer variable
+var workers[Time] int &gt;= 0
+</code></pre>
+<h3 id="25-objective-function">2.5 Objective Function</h3>
+<p>The goal to minimize or maximize. Note that the objective <strong>does not have a name</strong>.</p>
+<p><strong>Syntax:</strong></p>
+<pre><code class="language-los"># Minimize cost
+# Use iterators (p) inside the expression to reference indices
+minimize:
+    sum(qty[p] * Cost[p] for p in Products)
+</code></pre>
+<h3 id="26-constraints">2.6 Constraints</h3>
+<p>Rules that must be satisfied. Constraints are grouped in a <code>subject to:</code> (or <code>st:</code>) block.</p>
+<p><strong>Syntax:</strong></p>
+<pre><code class="language-los">subject to:
+    # 1. Simple constraint
+    total_limit: sum(qty[p] for p in Products) &lt;= 1000
+
+    # 2. For-each constraint (indexed constraint)
+    # &quot;For each factory f, production &lt;= capacity&quot;
+    capacity_limit:
+        sum(qty[p, f] for p in Products) &lt;= Capacity[f]
+        for f in Factories
+</code></pre>
+<hr />
+<h2 id="3-python-api-integration">3. Python API Integration</h2>
+<h3 id="31-basic-usage">3.1 Basic Usage</h3>
+<pre><code class="language-python">import los
+
+# 1. Run model (data is loaded from imports inside .los)
+result = los.solve(&quot;model.los&quot;)
+
+# 2. Inspect
+if result.is_optimal:
+    print(f&quot;Objective: {result.objective}&quot;)
+    print(result.get_variable(&quot;qty&quot;, as_df=True))
+</code></pre>
+<h3 id="32-exporting-to-standalone-python">3.2 Exporting to Standalone Python</h3>
+<p>Sometimes you want to compile a <code>.los</code> model but run it elsewhere without needing the <code>los</code> compiler again. You can export the model to a complete, standalone Python script!</p>
+<pre><code class="language-python">import los
+
+# 1. Compile model
+model = los.compile_model(&quot;model.los&quot;)
+
+# 2. Export to a ready-to-use Python script
+model.export_python(&quot;my_solver_script.py&quot;)
+</code></pre>
+<p>This generates a standalone <code>.py</code> file that includes all required imports, the native PuLP model code, the solver trigger (<code>prob.solve()</code>), and print statements for the results. You can run this generated script in any Python environment where <code>pulp</code> and <code>pandas</code> are installed.</p>
+<h3 id="33-advanced-manual-data-binding">3.3 Advanced: Manual Data Binding</h3>
+<p>If you are building a web app or generating data on the fly in Python, you can inject DataFrames manually. This overrides imported data.</p>
+<pre><code class="language-python">import los
+import pandas as pd
+
+# DataFrames
+df_data = pd.DataFrame({'Products': ['A', 'B'], 'Cost': [10, 20]})
+
+# Inject 'Products' Set and 'Cost' Param from this DataFrame
+result = los.solve(&quot;model.los&quot;, data={'Products': df_data})
+</code></pre>
+<hr />
+<h2 id="4-security">4. Security</h2>
+<p>LOS runs generated code in a <strong>Sandboxed Environment</strong>.
+*   <strong>Blocked</strong>: <code>open</code>, <code>__import__</code>, <code>eval</code>, <code>exec</code>.
+*   <strong>Allowed</strong>: Math functions, <code>pulp</code>, <code>pandas</code>, <code>numpy</code>.</p>
+<p>See <a href="./SECURITY.md">SECURITY.md</a> for details.</p>
+<hr />
+<h2 id="5-troubleshooting-common-errors">5. Troubleshooting Common Errors</h2>
+<h3 id="parseerror-unexpected-token"><code>ParseError: Unexpected token ...</code></h3>
+<ul>
+<li><strong>Check Case</strong>: Did you write <code>SET</code> instead of <code>set</code>?</li>
+<li><strong>Check Brackets</strong>: Sets use <code>{}</code>, Lists/Indices use <code>[]</code>.</li>
+</ul>
+<h3 id="keyerror-x"><code>KeyError: 'X'</code></h3>
+<ul>
+<li><strong>Check Data</strong>: A Param <code>X</code> was declared but not found in any imported CSV or provided DataFrame. Column names must match exactly.</li>
+</ul>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+            Back to top
+          </button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.dfff1995.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.dff1b7c8.min.js"></script>
+      
+    
+  </body>
+</html>
